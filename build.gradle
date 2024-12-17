@@ -1,0 +1,25 @@
+plugins {
+    id 'com.github.ben-manes.versions' version '0.51.0'
+    id 'groovy'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.apache.groovy:groovy:5.0.0-alpha-11"
+    implementation "info.debatty:java-string-similarity:2.0.0"
+    implementation "org.apache.commons:commons-text:1.13.0"
+}
+
+sourceSets.main.allSource.files.each { file ->
+    def name = "${file.name - '.groovy'}"
+    def subtask = tasks.register("run$name", JavaExec) {
+        dependsOn compileGroovy
+        group 'Application'
+        description "Run $file.name as a JVM application/Groovy script"
+        classpath = sourceSets.main.runtimeClasspath
+        mainClass = name
+    }
+}
