@@ -8,9 +8,11 @@ repositories {
 }
 
 dependencies {
-    implementation "org.apache.groovy:groovy:5.0.0-alpha-11"
-    implementation "info.debatty:java-string-similarity:2.0.0"
-    implementation "org.apache.commons:commons-text:1.13.0"
+    implementation 'org.apache.groovy:groovy:5.0.0-alpha-11'
+    implementation 'info.debatty:java-string-similarity:2.0.0'
+    implementation 'org.apache.commons:commons-text:1.13.0'
+    implementation 'commons-codec:commons-codec:1.17.1'
+    implementation 'com.diogonunes:JColor:5.5.1'
 }
 
 sourceSets.main.allSource.files.each { file ->
