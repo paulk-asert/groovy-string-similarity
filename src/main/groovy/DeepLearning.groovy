@@ -11,7 +11,10 @@ var sentences = [
     'The sea is blue',
     'The grass is green',
     'One two three',
-    'Bulls consume hay'
+    'Bulls consume hay',
+    'Bovines convert grass to milk',
+    'Dogs play in the grass',
+    'Bulls trample grass'
 ]
 
 System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
@@ -31,7 +34,7 @@ var embeddings = sentences.collect(predictor::predict)
 var query = 'Cows eat grass'
 var qe = predictor.predict(query)
 
-var bestMatches = embeddings.collect { cosineSimilarity(it, qe) }.withIndex().sort{-it.v1 }.take(3)
+var bestMatches = embeddings.collect { cosineSimilarity(it, qe) }.withIndex().sort{-it.v1 }.take(5)
 bestMatches.each{printf '%s (%4.2f)%n', sentences[it.v2], it.v1 }
 
 double cosineSimilarity(float[] a, float[] b) {

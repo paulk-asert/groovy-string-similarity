@@ -144,10 +144,11 @@ Expected output from running the `DeepLearning.groovy` script:
     [main] INFO ai.djl.pytorch.engine.PtEngine - Number of intra-op threads is 12
     [main] INFO ai.djl.translate.DeferredTranslatorFactory - Using TranslatorFactory: ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory
     [main] INFO ai.djl.util.Platform - Found matching platform from: jar:file:/Users/paulk/.gradle/caches/modules-2/files-2.1/ai.djl.huggingface/tokenizers/0.28.0/c66b1f8c7ef6fb541d0743362864c0751a47c4ed/tokenizers-0.28.0.jar!/native/lib/tokenizers.properties
+    Bovines convert grass to milk (0.80)
     Bulls consume hay (0.69)
+    Bulls trample grass (0.68)
+    Dogs play in the grass (0.65)
     The grass is green (0.62)
-    The sky is blue (0.37)
-
 
 References
 ----------
