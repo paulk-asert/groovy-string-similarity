@@ -11,13 +11,13 @@ dependencies {
     implementation 'org.apache.groovy:groovy:5.0.0-alpha-11'
     implementation 'info.debatty:java-string-similarity:2.0.0'
     implementation 'org.apache.commons:commons-text:1.13.0'
-    implementation 'commons-codec:commons-codec:1.17.1'
+    implementation 'commons-codec:commons-codec:1.17.2'
     implementation 'com.diogonunes:JColor:5.5.1'
 
-    implementation 'ai.djl:api:0.28.0'
-    implementation 'ai.djl.pytorch:pytorch-engine:0.28.0'
-    implementation 'ai.djl.huggingface:tokenizers:0.28.0'
-    implementation 'ai.djl:model-zoo:0.28.0'
+    implementation 'ai.djl:api:0.31.1'
+    implementation 'ai.djl.pytorch:pytorch-engine:0.31.1'
+    implementation 'ai.djl.huggingface:tokenizers:0.31.1'
+    implementation 'ai.djl:model-zoo:0.31.1'
     implementation 'org.slf4j:slf4j-simple:2.0.16'
 }
 
