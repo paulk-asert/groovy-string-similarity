@@ -3,6 +3,7 @@ import org.apache.commons.codec.language.Soundex
 import org.apache.commons.text.similarity.*
 
 import static com.diogonunes.jcolor.Ansi.colorize
+import static com.diogonunes.jcolor.Attribute.BLUE_TEXT
 import static com.diogonunes.jcolor.Attribute.GREEN_TEXT
 import static com.diogonunes.jcolor.Attribute.RED_TEXT
 import static org.codehaus.groovy.util.StringUtil.bar
@@ -23,7 +24,9 @@ var pairs = [
     ['cat', 'hat'],
     ['bear', 'bare'],
     ['there', 'their'],
-    ['cow', 'bull']
+    ['cow', 'bull'],
+    ['my name is Yoda', 'Yoda my name is'],
+    ['the cat sat on the mat', 'the fox jumped over the dog']
 ]
 
 pairs.each {
@@ -151,8 +154,15 @@ println d.distance("ABCDEF", "POIU")
 //var profile2 = cosine.getProfile(s21)
 //println cosine.similarity(profile1, profile2) // 0.516185
 
-var sdx = new Soundex()
 pairs.each { a, b ->
+    if (a.contains(' '))
+        doSentence(a, b)
+    else
+        doWord(a, b)
+}
+
+void doWord(String a, String b) {
+    var sdx = new Soundex()
     var sa = sdx.soundex(a)
     var sb = sdx.soundex(b)
     var color = sa == sb ? GREEN_TEXT() : RED_TEXT()
@@ -160,4 +170,16 @@ pairs.each { a, b ->
         colorize(sa.padRight(10), color) +
         b.padRight(10) +
         colorize(sb.padRight(10), color)
+}
+
+void doSentence(String a, String b) {
+    var sdx = new Soundex()
+    var sa = a.split().collect{ sdx.soundex(it) }
+    var sb = b.split().collect{ sdx.soundex(it) }
+    var (ca, cb) = sa.toSet() == sb.toSet() && sa != sb ?
+        [colorize(sa.join(' '), BLUE_TEXT()), colorize(sb.join(' '), BLUE_TEXT())]
+    :
+        [sa.indices.collect{colorize(sa[it], sa[it] == sb[it] ? GREEN_TEXT() : RED_TEXT()) }.join(' '),
+        sb.indices.collect{colorize(sb[it], sa[it] == sb[it] ? GREEN_TEXT() : RED_TEXT()) }.join(' ')]
+    println "$a $ca $b $cb"
 }
