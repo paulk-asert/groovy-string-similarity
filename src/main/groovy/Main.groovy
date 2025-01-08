@@ -92,7 +92,7 @@ def sortByDist(distAlgs, words, search) {
             }
             [w, result]
         }.toSorted{ e -> e.value }
-        [name, results.take(3).collect{ k, v -> "$k (${sprintf v instanceof Double ? v < 100 ? '%5.2f' : '%5.2e' : '%d', v})" }]
+        [name, results.take(3).collect{ k, v -> "$k (${sprintf v instanceof Double ? v < 100 ? '%.2f' : '%5.2e' : '%d', v})" }]
     }.each{ k, v -> println "$k: ${v.join(', ')}" }
     println()
 }
