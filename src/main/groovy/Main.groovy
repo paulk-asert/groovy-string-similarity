@@ -10,13 +10,14 @@ import static org.codehaus.groovy.util.StringUtil.bar
 
 var simAlgs = [
     NormalizedLevenshtein: new NormalizedLevenshtein()::similarity,
-    Jaccard: new Jaccard(1)::similarity,
-    'Jaccard(2)': new Jaccard(2)::similarity,
+    'Jaccard (debatty k=1)': new Jaccard(1)::similarity,
+    'Jaccard (debatty k=2)': new Jaccard(2)::similarity,
+    'Jaccard (debatty k=3)': new Jaccard()::similarity,
     JaroWinkler: new JaroWinkler()::similarity,
     RatcliffObershelp: new RatcliffObershelp()::similarity,
     SorensenDice: new SorensenDice()::similarity,
     Cosine: new Cosine()::similarity,
-    JaccardSimilarity: new JaccardSimilarity()::apply,
+    'JaccardSimilarity (commons text k=1)': new JaccardSimilarity()::apply,
     JaroWinklerSimilarity: new JaroWinklerSimilarity()::apply
 ]
 
@@ -40,14 +41,14 @@ private void showSimilarity(Map algorithms, String... args) {
     }
     results.sort{ e -> -e.value }.each { k, v ->
         var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
-        println "${k.padRight(25)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 20, 20), color)}"
+        println "${k.padRight(40)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 20, 20), color)}"
     }
     println()
 }
 
 var distAlgs = [
     NormalizedLevenshtein: new NormalizedLevenshtein()::distance,
-    WeightedLevenshtein: new WeightedLevenshtein({ char c1, char c2 ->
+    'WeightedLevenshtein (t is near r)': new WeightedLevenshtein({ char c1, char c2 ->
         c1 == 't' && c2 == 'r' ? 0.5 : 1.0
     })::distance,
     Damerau: new Damerau()::distance,
@@ -57,7 +58,7 @@ var distAlgs = [
     'NGram(2)': new NGram(2)::distance,
     'NGram(4)': new NGram(4)::distance,
     QGram: new QGram(2)::distance,
-    Soundex: new Soundex()::difference,
+    Soundex: { a, b -> 4 - new Soundex().difference(a, b) },
     CosineDistance: new CosineDistance()::apply,
     HammingDistance: new HammingDistance()::apply,
     JaccardDistance: new JaccardDistance()::apply,
@@ -67,7 +68,7 @@ var distAlgs = [
     LongestCommonSubsequenceDistance: new LongestCommonSubsequenceDistance()::apply
 ]
 
-var words = [
+var phrases = [
     'The sky is blue',
     'The sea is blue',
     'Blue skies following me',
@@ -76,28 +77,29 @@ var words = [
     'I read a book',
     'The wind blew',
     'Numbers are odd or even',
-    'Red noses'
+    'Red noses',
+    'Red knows'
 ]
 
 def sortByDist(distAlgs, words, search) {
     println "          $search"
     distAlgs.collectEntries { name, method ->
-        var results = words.toSorted{ w ->
+        var results = words.collectEntries{ w ->
+            var result = Double.MAX_VALUE
             try {
-                method(w, search)
+                result = method(w, search)
             } catch(ignore) {
-                // default for distance measures which require same sized inputs
-                Double.MAX_VALUE
             }
-        }
-        [name, results.take(3)]
+            [w, result]
+        }.toSorted{ e -> e.value }
+        [name, results.take(3).collect{ k, v -> "$k (${sprintf v instanceof Double ? v < 100 ? '%5.2f' : '%5.2e' : '%d', v})" }]
     }.each{ k, v -> println "$k: ${v.join(', ')}" }
     println()
 }
 
-sortByDist(distAlgs, words, 'The blue car')
-sortByDist(distAlgs, words, 'The evening sky')
-sortByDist(distAlgs, words, 'Red roses')
+sortByDist(distAlgs, phrases, 'The blue car')
+sortByDist(distAlgs, phrases, 'The evening sky')
+sortByDist(distAlgs, phrases, 'Red roses')
 
 /*
 var d = new Damerau()
