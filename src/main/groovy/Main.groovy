@@ -28,6 +28,7 @@ var pairs = [
     ['there', 'their'],
     ['cow', 'bull'],
     ['knows', 'nose'],
+    ['hippo', 'hippopotamus'],
     ['my name is Yoda', 'Yoda my name is'],
     ['the cat sat on the mat', 'the fox jumped over the dog']
 ]
@@ -82,7 +83,8 @@ var phrases = [
     'The wind blew',
     'Numbers are odd or even',
     'Red noses',
-    'Red knows'
+    'Read knows',
+    'Hippopotamus'
 ]
 
 def sortByDist(distAlgs, words, search) {
@@ -104,6 +106,7 @@ def sortByDist(distAlgs, words, search) {
 sortByDist(distAlgs, phrases, 'The blue car')
 sortByDist(distAlgs, phrases, 'The evening sky')
 sortByDist(distAlgs, phrases, 'Red roses')
+sortByDist(distAlgs, phrases, 'Hippo')
 
 /*
 var d = new Damerau()
@@ -175,10 +178,10 @@ void doWord(alg, String a, String b) {
     var sa = alg(a)
     var sb = alg(b)
     var color = sa == sb ? GREEN_TEXT() : RED_TEXT()
-    println a.padRight(10) +
-        colorize(sa.padRight(10), color) +
-        b.padRight(10) +
-        colorize(sb.padRight(10), color)
+    println a.padRight(14) +
+        colorize(sa.padRight(6), color) +
+        b.padRight(14) +
+        colorize(sb.padRight(6), color)
 }
 
 void doSentence(alg, String a, String b) {
