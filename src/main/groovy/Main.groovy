@@ -1,4 +1,5 @@
 import info.debatty.java.stringsimilarity.*
+import org.apache.commons.codec.language.Metaphone
 import org.apache.commons.codec.language.Soundex
 import org.apache.commons.text.similarity.*
 
@@ -26,6 +27,7 @@ var pairs = [
     ['bear', 'bare'],
     ['there', 'their'],
     ['cow', 'bull'],
+    ['knows', 'nose'],
     ['my name is Yoda', 'Yoda my name is'],
     ['the cat sat on the mat', 'the fox jumped over the dog']
 ]
@@ -70,6 +72,8 @@ var distAlgs = [
 
 var phrases = [
     'The sky is blue',
+    'The blue sky',
+    'The blue cat',
     'The sea is blue',
     'Blue skies following me',
     'My ferrari is red',
@@ -156,17 +160,20 @@ println d.distance("ABCDEF", "POIU")
 //var profile2 = cosine.getProfile(s21)
 //println cosine.similarity(profile1, profile2) // 0.516185
 
-pairs.each { a, b ->
-    if (a.contains(' '))
-        doSentence(a, b)
-    else
-        doWord(a, b)
+[Soundex: new Soundex()::soundex,
+ Metaphone: new Metaphone()::encode].each { name,alg ->
+    println name
+    pairs.each { a, b ->
+        if (a.contains(' '))
+            doSentence(alg, a, b)
+        else
+            doWord(alg, a, b)
+    }
 }
 
-void doWord(String a, String b) {
-    var sdx = new Soundex()
-    var sa = sdx.soundex(a)
-    var sb = sdx.soundex(b)
+void doWord(alg, String a, String b) {
+    var sa = alg(a)
+    var sb = alg(b)
     var color = sa == sb ? GREEN_TEXT() : RED_TEXT()
     println a.padRight(10) +
         colorize(sa.padRight(10), color) +
@@ -174,10 +181,9 @@ void doWord(String a, String b) {
         colorize(sb.padRight(10), color)
 }
 
-void doSentence(String a, String b) {
-    var sdx = new Soundex()
-    var sa = a.split().collect{ sdx.soundex(it) }
-    var sb = b.split().collect{ sdx.soundex(it) }
+void doSentence(alg, String a, String b) {
+    var sa = a.split().collect{ alg(it) }
+    var sb = b.split().collect{ alg(it) }
     var (ca, cb) = sa.toSet() == sb.toSet() && sa != sb ?
         [colorize(sa.join(' '), BLUE_TEXT()), colorize(sb.join(' '), BLUE_TEXT())]
     :
