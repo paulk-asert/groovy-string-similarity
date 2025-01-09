@@ -14,7 +14,8 @@ var sentences = [
     'Bulls consume hay',
     'Bovines convert grass to milk',
     'Dogs play in the grass',
-    'Bulls trample grass'
+    'Bulls trample grass',
+    'Dachshunds are delightful'
 ]
 
 System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
@@ -31,11 +32,14 @@ var model = criteria.loadModel()
 var predictor = model.newPredictor()
 var embeddings = sentences.collect(predictor::predict)
 
-var query = 'Cows eat grass'
-var qe = predictor.predict(query)
-
-var bestMatches = embeddings.collect { cosineSimilarity(it, qe) }.withIndex().sort{-it.v1 }.take(5)
-bestMatches.each{printf '%s (%4.2f)%n', sentences[it.v2], it.v1 }
+['Cows eat grass',
+ 'Poodles are cute',
+ 'The water is turquoise'].each { query ->
+    println "\n    $query"
+    var qe = predictor.predict(query)
+    var bestMatches = embeddings.collect { cosineSimilarity(it, qe) }.withIndex().sort { -it.v1 }.take(5)
+    bestMatches.each { printf '%s (%4.2f)%n', sentences[it.v2], it.v1 }
+}
 
 double cosineSimilarity(float[] a, float[] b) {
     var dotProduct = a.indices.sum{ a[it] * b[it] }

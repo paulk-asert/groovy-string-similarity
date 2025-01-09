@@ -30,7 +30,8 @@ var pairs = [
     ['knows', 'nose'],
     ['hippo', 'hippopotamus'],
     ['my name is Yoda', 'Yoda my name is'],
-    ['the cat sat on the mat', 'the fox jumped over the dog']
+    ['the cat sat on the mat', 'the fox jumped over the dog'],
+    ['poodles are cute', 'dachshunds are delightful']
 ]
 
 pairs.each {
