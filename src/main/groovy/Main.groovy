@@ -185,12 +185,20 @@ void doWord(alg, String a, String b) {
 }
 
 void doSentence(alg, String a, String b) {
-    var sa = a.split().collect{ alg(it) }
-    var sb = b.split().collect{ alg(it) }
+    var sa = a.split().collect(alg)
+    var sb = b.split().collect(alg)
     var (ca, cb) = sa.toSet() == sb.toSet() && sa != sb ?
-        [colorize(sa.join(' '), BLUE_TEXT()), colorize(sb.join(' '), BLUE_TEXT())]
+        scrambledWordsColoring(sa, sb)
     :
-        [sa.indices.collect{colorize(sa[it], sa[it] == sb[it] ? GREEN_TEXT() : RED_TEXT()) }.join(' '),
-        sb.indices.collect{colorize(sb[it], sa[it] == sb[it] ? GREEN_TEXT() : RED_TEXT()) }.join(' ')]
+        wordMatchColoring(sa, sb)
     println "$a $ca $b $cb"
+}
+
+def wordMatchColoring(sa, sb) {
+    [sa.indices.collect { colorize(sa[it], sa[it] == sb[it] ? GREEN_TEXT() : RED_TEXT()) }.join(' '),
+     sb.indices.collect { colorize(sb[it], sa[it] == sb[it] ? GREEN_TEXT() : RED_TEXT()) }.join(' ')]
+}
+
+def scrambledWordsColoring(List<Object> sa, List<Object> sb) {
+    [colorize(sa.join(' '), BLUE_TEXT()), colorize(sb.join(' '), BLUE_TEXT())]
 }
