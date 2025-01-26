@@ -1,3 +1,4 @@
+import com.google.refine.clustering.binning.Metaphone3Keyer
 import org.apache.commons.codec.language.Caverphone2
 import org.apache.commons.codec.language.DoubleMetaphone
 import org.apache.commons.codec.language.Metaphone
@@ -33,6 +34,7 @@ var algs = [Soundex: { a, b -> new Soundex().with{pretty(soundex(a), soundex(b))
     Metaphone8: { a, b -> new Metaphone(maxCodeLen: 8).with{ pretty(encode(a), encode(b)) }},
     Metaphone8LCS: { a, b -> new Metaphone(maxCodeLen: 8).with{ new LongestCommonSubsequence().apply(encode(a), encode(b)) }},
     Metaphone8Lev: { a, b -> new Metaphone(maxCodeLen: 8).with{ new LevenshteinDistance(8).apply(encode(a), encode(b)) }},
+    Metaphone3: { a, b -> new Metaphone3Keyer().with{ pretty(key(a), key(b)) }},
     DoubleMetaphone: { a, b -> new DoubleMetaphone().with{ pretty(doubleMetaphone(a), doubleMetaphone(b)) }},
 ]
 
