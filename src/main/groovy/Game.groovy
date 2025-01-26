@@ -1,14 +1,11 @@
 import ai.djl.repository.zoo.Criteria
 import ai.djl.training.util.ProgressBar
 import ai.djl.translate.DeferredTranslatorFactory
-import info.debatty.java.stringsimilarity.Damerau
 import info.debatty.java.stringsimilarity.Levenshtein
 import org.apache.commons.codec.language.Metaphone
 import org.apache.commons.codec.language.Soundex
 import org.apache.commons.text.similarity.HammingDistance
-import org.apache.commons.text.similarity.JaccardDistance
 import org.apache.commons.text.similarity.JaccardSimilarity
-import org.apache.commons.text.similarity.JaroWinklerDistance
 import org.apache.commons.text.similarity.LongestCommonSubsequence
 
 import java.nio.file.Paths
@@ -39,22 +36,47 @@ double cosineSimilarity(float[] a, float[] b) {
 var distAlgs = [
     LongestCommonSubsequence: new LongestCommonSubsequence()::apply,
     Hamming: new HammingDistance()::apply,
-    Levenshtein: { a, b -> new Levenshtein().distance(a, b).intValue() },
-    Jaccard: { a, b -> "${(100 * new JaccardSimilarity().apply(a, b)).intValue()}%" },
-    Sound: { a, b ->
-        "${(12.5 * (new Soundex().difference(a, b) + 4 - new Metaphone().with{new Levenshtein().distance(encode(a), encode(b))})).intValue() }%" },
-    Meaning: { a, b -> "${(100 * cosineSimilarity(predictor.predict(a), predictor.predict(b))).intValue() }%" }
+    Levenshtein: { a, b -> new Levenshtein().distance(a, b).round() },
+    Jaccard: { a, b -> "${(100 * new JaccardSimilarity().apply(a, b)).round()}%" },
+    Sound: { a, b -> def (sa, sb) = new Metaphone(maxCodeLen: 8).with{[encode(a), encode(b)] }
+        def soundex = 10 * new Soundex().difference(sa, sb)
+        def jaccard = 20 * new JaccardSimilarity().apply(sa, sb)
+        def lev = 5 * (4 - new Levenshtein().distance(sa, sb))
+        def lcs = 40 * (new LongestCommonSubsequence().apply(sa, sb)/(sa.size() + sb.size()))
+        "${(soundex + jaccard + lev + lcs).round() }% ${new Soundex().encode(a)} ${new Soundex().encode(b)} $sa $sb $soundex $jaccard $lev $lcs" },
+    Angle: { a, b -> "${(100 * cosineSimilarity(predictor.predict(a), predictor.predict(b))).round() }%" }
 ]
 
-var answer = 'peace'
-var guesses = 'piece peas pizza calm place pecan'.split()
+//println new Soundex().difference('navy', 'envy')
+//println 4 - new Metaphone().with{new Levenshtein().distance(encode('navy'), encode('envy')) }
+//println new Metaphone().encode('navy')
+//println new Metaphone().encode('envy')
+//var answer = 'peace'
+//var guesses = 'piece peas pizza calm place pecan'.split()
+//var answer = 'upper'
+//var guesses = 'lower udder purer touch higher above capital peruse'.split()
+//var answer = 'envy'
+//var guesses = 'greed navy green environment envious enviable jealous envy'.split()
+//var answer = 'green'
+//var guesses = 'rainbow stow braid anger groan grass green'.split()
+//var answer = 'steak'
+//var guesses = 'aftershock fish meat trace break stake'.split()
+var answer = 'pudding'
+//var guesses = 'aftershock egg pig pruning pudding'.split() // juice sushi pulling pudding mulling
+var guesses = 'aftershock fruit budging bugling buzzing
+//var guesses = 'egg aftershock pig pruning pudding'.split()
+Set possible = 'a'..'z'
 
-guesses.each {
-    println "      $it $answer"
+guesses.each {guess ->
+    println "      $guess $answer (possible: ${possible.join(' ')})"
     var results = distAlgs.collectEntries { k, method ->
-        var result = -1
+        var result = '-'
         try {
-            result = method(it, answer)
+            result = method(guess, answer)
+            if (k == 'Jaccard') {
+                if (result == '0%') possible -= guess.toSet()
+                else if (result == '100%') possible = guess.toSet()
+            }
         } catch(ignore) { }
         [k, result]
     }
