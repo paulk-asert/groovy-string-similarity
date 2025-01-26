@@ -1,7 +1,9 @@
 import com.google.refine.clustering.binning.Metaphone3Keyer
 import org.apache.commons.codec.language.Caverphone2
+import org.apache.commons.codec.language.DaitchMokotoffSoundex
 import org.apache.commons.codec.language.DoubleMetaphone
 import org.apache.commons.codec.language.Metaphone
+import org.apache.commons.codec.language.Nysiis
 import org.apache.commons.codec.language.RefinedSoundex
 import org.apache.commons.codec.language.Soundex
 import org.apache.commons.text.similarity.LevenshteinDistance
@@ -9,7 +11,6 @@ import org.apache.commons.text.similarity.LongestCommonSubsequence
 
 import static com.diogonunes.jcolor.Ansi.colorize
 import static com.diogonunes.jcolor.Attribute.GREEN_TEXT
-
 var pairs = [
     ['cat', 'hat'],
     ['bear', 'bare'],
@@ -25,16 +26,18 @@ var pairs = [
 ]
 
 var pretty = { a, b ->
-    var result = "$a|$b".padRight(18)
+    var result = "$a|$b".padRight(22)
     a == b ? colorize(result, GREEN_TEXT()) : result
 }
 
 var algs = [Soundex: { a, b -> new Soundex().with{pretty(soundex(a), soundex(b)) }},
     RefinedSoundex: { a, b -> new RefinedSoundex().with{ pretty(encode(a), encode(b)) }},
+    DaitchMokotoffSoundex: { a, b -> new DaitchMokotoffSoundex().with{ pretty(encode(a), encode(b)) }},
+    Nysiis: { a, b -> new Nysiis().with{ pretty(encode(a), encode(b)) }},
     Metaphone: { a, b -> new Metaphone().with{ pretty(encode(a), encode(b)) }},
-    'Metaphone(6)': { a, b -> new Metaphone(maxCodeLen: 6).with{ pretty(encode(a), encode(b)) }},
+    'Metaphone(8)': { a, b -> new Metaphone(maxCodeLen: 8).with{ pretty(encode(a), encode(b)) }},
     Metaphone3: { a, b -> new Metaphone3Keyer().with{ pretty(key(a), key(b)) }},
-    'DblMetaphone(6)': { a, b -> new DoubleMetaphone(maxCodeLen: 6).with{ pretty(doubleMetaphone(a), doubleMetaphone(b)) }},
+    'DblMetaphone(8)': { a, b -> new DoubleMetaphone(maxCodeLen: 8).with{ pretty(doubleMetaphone(a), doubleMetaphone(b)) }},
     Caverphone2: { a, b -> new Caverphone2().with{ pretty(encode(a), encode(b)) }},
 ]
 
@@ -55,13 +58,13 @@ var results = [pairs, algs].combinations().collect { pair, namedAlg ->
     namedAlg.value(pair)
 }
 
-display(algs, pairs, results, 18, 22)
+display(algs, pairs, results, 22, 22)
 
 results = [pairs, gameAlgs].combinations().collect { pair, namedAlg ->
     namedAlg.value(pair)
 }
 
-display(gameAlgs, pairs, results, 14, 24
+display(gameAlgs, pairs, results, 14, 24)
 
 def display(algs, pairs, r, w1, w2) {
     for (i in 0..algs.size()) {
