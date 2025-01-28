@@ -14,7 +14,7 @@ import static java.lang.Math.sqrt
 
 //System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 
-var path = Paths.get(DeepLearning.classLoader.getResource('UAE-Large-V1.zip').toURI())
+var path = Paths.get(AngleDLJ.classLoader.getResource('UAE-Large-V1.zip').toURI())
 var criteria = Criteria.builder()
     .setTypes(String, float[])
     .optModelPath(path)
@@ -38,13 +38,12 @@ var distAlgs = [
     Hamming: new HammingDistance()::apply,
     Levenshtein: { a, b -> new Levenshtein().distance(a, b).round() },
     Jaccard: { a, b -> "${(100 * new JaccardSimilarity().apply(a, b)).round()}%" },
-    Sound: { a, b -> def (sa, sb) = new Metaphone(maxCodeLen: 8).with{[encode(a), encode(b)] }
-        def soundex = 10 * new Soundex().difference(sa, sb)
-        def jaccard = 20 * new JaccardSimilarity().apply(sa, sb)
-        def lev = 5 * (4 - new Levenshtein().distance(sa, sb))
-        def lcs = 40 * (new LongestCommonSubsequence().apply(sa, sb)/(sa.size() + sb.size()))
-        "${(soundex + jaccard + lev + lcs).round() }% ${new Soundex().encode(a)} ${new Soundex().encode(b)} $sa $sb $soundex $jaccard $lev $lcs" },
-    Angle: { a, b -> "${(100 * cosineSimilarity(predictor.predict(a), predictor.predict(b))).round() }%" }
+    Phonetic: { a, b ->
+        var (sa, sb) = new Metaphone(maxCodeLen: 5).with{ [encode(a), encode(b)] }
+        var max = [sa.size(), sb.size()].max()
+        var m = new LongestCommonSubsequence().apply(sa, sb)
+        "${(100 * m/max).round()}%" },
+    Angle: { a, b -> "${(100 * cosineSimilarity(predictor.predict(a), predictor.predict(b))).round()}%" }
 ]
 
 //println new Soundex().difference('navy', 'envy')
@@ -63,7 +62,7 @@ var distAlgs = [
 //var guesses = 'aftershock fish meat trace break stake'.split()
 var answer = 'pudding'
 //var guesses = 'aftershock egg pig pruning pudding'.split() // juice sushi pulling pudding mulling
-var guesses = 'aftershock fruit budging bugling buzzing
+var guesses = 'aftershock fruit budging bugling buzzing bumping mulling pudding'.split()*.toLowerCase()
 //var guesses = 'egg aftershock pig pruning pudding'.split()
 Set possible = 'a'..'z'
 

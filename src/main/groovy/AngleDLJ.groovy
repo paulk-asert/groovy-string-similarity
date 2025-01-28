@@ -20,7 +20,7 @@ var sentences = [
 
 System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 
-var path = Paths.get(DeepLearning.classLoader.getResource('UAE-Large-V1.zip').toURI())
+var path = Paths.get(AngleDLJ.classLoader.getResource('UAE-Large-V1.zip').toURI())
 var criteria = Criteria.builder()
     .setTypes(String, float[])
     .optModelPath(path)
