@@ -11,6 +11,7 @@ repositories {
 
 def slf4jVersion = '2.0.16'
 def djlVersion = '0.31.1'
+def nd4jVersion= '1.0.0-M2.1'
 
 dependencies {
     implementation 'org.apache.groovy:groovy:5.0.0-alpha-12'
@@ -30,20 +31,49 @@ dependencies {
     //runtimeOnly "ai.djl.tensorflow:tensorflow-native-auto:2.10.1"
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:win-x86_64"
+        runtimeOnly 'org.bytedeco:javacpp:1.5.11:windows-x86_64'
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:osx-aarch64"
+        runtimeOnly 'org.bytedeco:javacpp:1.5.11:ios-arm64'
     } else if (Os.isFamily(Os.FAMILY_UNIX)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:linux-x86_64"
+        runtimeOnly 'org.bytedeco:javacpp:1.5.11:linux-x86_64'
     }
 //    runtimeOnly "org.slf4j:slf4j-jdk14:$slf4jVersion"
+    runtimeOnly("org.nd4j:nd4j-native-platform:$nd4jVersion") {
+        exclude group: 'org.bytedeco', module: 'javacpp-presets'
+        exclude group: 'org.bytedeco', module: 'javacpp'
+        exclude group: 'org.bytedeco', module: 'javacpp-platform'
+    }
+    implementation("org.deeplearning4j:deeplearning4j-core:$nd4jVersion") {
+        exclude group: 'org.bytedeco', module: 'javacpp-presets'
+        exclude group: 'org.bytedeco', module: 'javacpp'
+        exclude group: 'org.bytedeco', module: 'javacpp-platform'
+        exclude group: 'com.twelvemonkeys.imageio'
+        exclude group: 'com.github.jai-imageio'
+        exclude group: 'org.datavec', module: 'datavec-data-image'
+        exclude group: 'com.github.oshi'
+        exclude group: 'org.deeplearning4j', module: 'deeplearning4j-ui-components'
+        exclude group: 'org.deeplearning4j', module: 'deeplearning4j-modelimport'
+    }
+    implementation("org.deeplearning4j:deeplearning4j-nlp:$nd4jVersion") {
+        exclude group: 'org.bytedeco', module: 'javacpp-presets'
+        exclude group: 'org.bytedeco', module: 'javacpp'
+        exclude group: 'org.bytedeco', module: 'javacpp-platform'
+        exclude group: 'com.twelvemonkeys.imageio'
+    }
+    implementation('org.bytedeco:javacpp:1.5.11') {
+        transitive = false
+    }
+    implementation('org.bytedeco:javacpp:1.5.11:ios-arm64')
 }
 
 sourceSets.main.allSource.files.each { file ->
     def name = "${file.name - '.groovy'}"
     tasks.register("run$name", JavaExec) {
         dependsOn compileGroovy
-        group 'Application'
-        description "Run $file.name as a JVM application/Groovy script"
+        group = 'Application'
+        description = "Run $file.name as a JVM application/Groovy script"
         classpath = sourceSets.main.runtimeClasspath
         mainClass = name
     }
