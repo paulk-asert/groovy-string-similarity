@@ -25,30 +25,35 @@ dependencies {
     implementation "ai.djl.pytorch:pytorch-engine:$djlVersion"
     implementation "ai.djl.huggingface:tokenizers:$djlVersion"
     implementation "ai.djl:model-zoo:$djlVersion"
-    implementation "org.slf4j:slf4j-simple:$slf4jVersion"
+    runtimeOnly "org.slf4j:slf4j-simple:$slf4jVersion"
     runtimeOnly "ai.djl.tensorflow:tensorflow-engine:$djlVersion"
     runtimeOnly "ai.djl.tensorflow:tensorflow-model-zoo:$djlVersion"
     //runtimeOnly "ai.djl.tensorflow:tensorflow-native-auto:2.10.1"
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:win-x86_64"
         runtimeOnly 'org.bytedeco:javacpp:1.5.11:windows-x86_64'
+        runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:windows-x86_64'
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:osx-aarch64"
         runtimeOnly 'org.bytedeco:javacpp:1.5.11:ios-arm64'
+        runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:ios-arm64'
     } else if (Os.isFamily(Os.FAMILY_UNIX)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:linux-x86_64"
         runtimeOnly 'org.bytedeco:javacpp:1.5.11:linux-x86_64'
+        runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:linux-x86_64'
     }
 //    runtimeOnly "org.slf4j:slf4j-jdk14:$slf4jVersion"
     runtimeOnly("org.nd4j:nd4j-native-platform:$nd4jVersion") {
         exclude group: 'org.bytedeco', module: 'javacpp-presets'
         exclude group: 'org.bytedeco', module: 'javacpp'
         exclude group: 'org.bytedeco', module: 'javacpp-platform'
+        exclude group: 'org.bytedeco', module: 'openblas'
     }
     implementation("org.deeplearning4j:deeplearning4j-core:$nd4jVersion") {
         exclude group: 'org.bytedeco', module: 'javacpp-presets'
         exclude group: 'org.bytedeco', module: 'javacpp'
         exclude group: 'org.bytedeco', module: 'javacpp-platform'
+        exclude group: 'org.bytedeco', module: 'openblas'
         exclude group: 'com.twelvemonkeys.imageio'
         exclude group: 'com.github.jai-imageio'
         exclude group: 'org.datavec', module: 'datavec-data-image'
@@ -60,9 +65,13 @@ dependencies {
         exclude group: 'org.bytedeco', module: 'javacpp-presets'
         exclude group: 'org.bytedeco', module: 'javacpp'
         exclude group: 'org.bytedeco', module: 'javacpp-platform'
+        exclude group: 'org.bytedeco', module: 'openblas'
         exclude group: 'com.twelvemonkeys.imageio'
     }
-    implementation('org.bytedeco:javacpp:1.5.11') {
+    runtimeOnly('org.bytedeco:openblas:0.3.28-1.5.11') {
+        transitive = false
+    }
+    runtimeOnly('org.bytedeco:javacpp:1.5.11') {
         transitive = false
     }
 }
