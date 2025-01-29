@@ -65,7 +65,6 @@ dependencies {
     implementation('org.bytedeco:javacpp:1.5.11') {
         transitive = false
     }
-    implementation('org.bytedeco:javacpp:1.5.11:ios-arm64')
 }
 
 sourceSets.main.allSource.files.each { file ->
