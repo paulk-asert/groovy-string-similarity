@@ -15,6 +15,7 @@ import static java.lang.Math.max
 
 var pairs = [
     ['cat', 'hat'],
+    ['cat', 'kitten'],
     ['bear', 'bare'],
     ['pair', 'pare'],
     ['there', 'their'],

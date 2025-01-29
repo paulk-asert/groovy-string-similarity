@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id 'com.github.ben-manes.versions' version '0.52.0'
     id 'groovy'
@@ -7,6 +9,9 @@ repositories {
     mavenCentral()
 }
 
+def slf4jVersion = '2.0.16'
+def djlVersion = '0.31.1'
+
 dependencies {
     implementation 'org.apache.groovy:groovy:5.0.0-alpha-12'
     implementation 'info.debatty:java-string-similarity:2.0.0'
@@ -15,11 +20,22 @@ dependencies {
     implementation 'com.diogonunes:JColor:5.5.1'
     implementation 'org.openrefine:main:3.9-beta1'
 
-    implementation 'ai.djl:api:0.31.1'
-    implementation 'ai.djl.pytorch:pytorch-engine:0.31.1'
-    implementation 'ai.djl.huggingface:tokenizers:0.31.1'
-    implementation 'ai.djl:model-zoo:0.31.1'
-    implementation 'org.slf4j:slf4j-simple:2.0.16'
+    implementation "ai.djl:api:$djlVersion"
+    implementation "ai.djl.pytorch:pytorch-engine:$djlVersion"
+    implementation "ai.djl.huggingface:tokenizers:$djlVersion"
+    implementation "ai.djl:model-zoo:$djlVersion"
+    implementation "org.slf4j:slf4j-simple:$slf4jVersion"
+    runtimeOnly "ai.djl.tensorflow:tensorflow-engine:$djlVersion"
+    runtimeOnly "ai.djl.tensorflow:tensorflow-model-zoo:$djlVersion"
+    //runtimeOnly "ai.djl.tensorflow:tensorflow-native-auto:2.10.1"
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:win-x86_64"
+    } else if (Os.isFamily(Os.FAMILY_MAC)) {
+        runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:osx-aarch64"
+    } else if (Os.isFamily(Os.FAMILY_UNIX)) {
+        runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:linux-x86_64"
+    }
+//    runtimeOnly "org.slf4j:slf4j-jdk14:$slf4jVersion"
 }
 
 sourceSets.main.allSource.files.each { file ->

@@ -3,7 +3,6 @@ import ai.djl.training.util.ProgressBar
 import ai.djl.translate.DeferredTranslatorFactory
 import info.debatty.java.stringsimilarity.Levenshtein
 import org.apache.commons.codec.language.Metaphone
-import org.apache.commons.codec.language.Soundex
 import org.apache.commons.text.similarity.HammingDistance
 import org.apache.commons.text.similarity.JaccardSimilarity
 import org.apache.commons.text.similarity.LongestCommonSubsequence
@@ -14,7 +13,7 @@ import static java.lang.Math.sqrt
 
 //System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 
-var path = Paths.get(AngleDLJ.classLoader.getResource('UAE-Large-V1.zip').toURI())
+var path = Paths.get(DjlPytorchAngle.classLoader.getResource('UAE-Large-V1.zip').toURI())
 var criteria = Criteria.builder()
     .setTypes(String, float[])
     .optModelPath(path)

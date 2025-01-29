@@ -4,9 +4,11 @@ import ai.djl.translate.DeferredTranslatorFactory
 
 import java.nio.file.Paths
 
-import static java.lang.Math.sqrt
-
-var sentences = [
+var phrases = [
+    'bull',
+    'bovine',
+    'kitten',
+    'hay',
     'The sky is blue',
     'The sea is blue',
     'The grass is green',
@@ -20,7 +22,7 @@ var sentences = [
 
 System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 
-var path = Paths.get(AngleDLJ.classLoader.getResource('UAE-Large-V1.zip').toURI())
+var path = Paths.get(DjlPytorchAngle.classLoader.getResource('UAE-Large-V1.zip').toURI())
 var criteria = Criteria.builder()
     .setTypes(String, float[])
     .optModelPath(path)
@@ -30,20 +32,12 @@ var criteria = Criteria.builder()
 
 var model = criteria.loadModel()
 var predictor = model.newPredictor()
-var embeddings = sentences.collect(predictor::predict)
+var embeddings = phrases.collect(predictor::predict)
 
-['Cows eat grass',
- 'Poodles are cute',
- 'The water is turquoise'].each { query ->
+['cow', 'cat', 'dog', 'grass', 'Cows eat grass',
+ 'Poodles are cute', 'The water is turquoise'].each { query ->
     println "\n    $query"
     var qe = predictor.predict(query)
-    var bestMatches = embeddings.collect { cosineSimilarity(it, qe) }.withIndex().sort { -it.v1 }.take(5)
-    bestMatches.each { printf '%s (%4.2f)%n', sentences[it.v2], it.v1 }
-}
-
-double cosineSimilarity(float[] a, float[] b) {
-    var dotProduct = a.indices.sum{ a[it] * b[it] }
-    var sumSqA = a.toList().sum(n -> n ** 2)
-    var sumSqB = b.toList().sum(n -> n ** 2)
-    dotProduct / (sqrt(sumSqA) * sqrt(sumSqB))
+    var bestMatches = embeddings.collect { MathUtil.cosineSimilarity(it, qe) }.withIndex().sort { -it.v1 }.take(5)
+    bestMatches.each { printf '%s (%4.2f)%n', phrases[it.v2], it.v1 }
 }

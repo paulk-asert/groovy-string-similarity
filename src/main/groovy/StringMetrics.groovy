@@ -21,6 +21,7 @@ var simAlgs = [
 
 var pairs = [
     ['cat', 'hat'],
+    ['cat', 'kitten'],
     ['bear', 'bare'],
     ['pair', 'pear'],
     ['there', 'their'],
