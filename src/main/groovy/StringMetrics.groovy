@@ -11,18 +11,20 @@ var simAlgs = [
     'Jaccard (debatty k=1)': new Jaccard(1)::similarity,
     'Jaccard (debatty k=2)': new Jaccard(2)::similarity,
     'Jaccard (debatty k=3)': new Jaccard()::similarity,
-    JaroWinkler: new JaroWinkler()::similarity,
+    'Jaccard (commons text k=1)': new JaccardSimilarity()::apply,
+    'JaroWinkler (debatty)': new JaroWinkler()::similarity,
+    'JaroWinkler (commons text)': new JaroWinklerSimilarity()::apply,
     RatcliffObershelp: new RatcliffObershelp()::similarity,
     SorensenDice: new SorensenDice()::similarity,
     Cosine: new Cosine()::similarity,
-    'JaccardSimilarity (commons text k=1)': new JaccardSimilarity()::apply,
-    JaroWinklerSimilarity: new JaroWinklerSimilarity()::apply
 ]
 
 var pairs = [
     ['cat', 'hat'],
     ['cat', 'kitten'],
+    ['cat', 'dog'],
     ['bear', 'bare'],
+    ['bear', 'bean'],
     ['pair', 'pear'],
     ['there', 'their'],
     ['sort', 'sought'],
@@ -30,8 +32,13 @@ var pairs = [
     ['winning', 'grinning'],
     ['knows', 'nose'],
     ['ground', 'aground'],
+    ['grounds', 'aground'],
     ['peeler', 'repeal'],
     ['hippo', 'hippopotamus'],
+    ['kangaroo', 'kangarxx'],
+    ['kangaroo', 'xxngaroo'],
+    ['elton john', 'john elton'],
+    ['elton john', 'nhoj notle'],
     ['my name is Yoda', 'Yoda my name is'],
     ['the cat sat on the mat', 'the fox jumped over the dog'],
     ['poodles are cute', 'dachshunds are delightful']
@@ -48,7 +55,7 @@ private void showSimilarity(Map algorithms, String... args) {
     }
     results.sort{ e -> -e.value }.each { k, v ->
         var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
-        println "${k.padRight(40)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 20, 20), color)}"
+        println "${k.padRight(30)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 20, 20), color)}"
     }
     println()
 }
