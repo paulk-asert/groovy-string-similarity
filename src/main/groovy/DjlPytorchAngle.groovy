@@ -41,3 +41,12 @@ var embeddings = phrases.collect(predictor::predict)
     var bestMatches = embeddings.collect { MathUtil.cosineSimilarity(it, qe) }.withIndex().sort { -it.v1 }.take(5)
     bestMatches.each { printf '%s (%4.2f)%n', phrases[it.v2], it.v1 }
 }
+
+String[] words = ['cow', 'bull', 'calf', 'bovine', 'cattle', 'livestock', 'cat', 'kitten', 'feline',
+                  'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
+var wEmbeddings = words.collect{word -> predictor.predict(word) }
+wEmbeddings.eachWithIndex { s, i ->
+    print "\n${words[i]}:"
+    var bestMatches = wEmbeddings.collect { MathUtil.cosineSimilarity(it, s) }.withIndex().findAll{ it.v2 != i }.sort { -it.v1 }.take(5)
+    bestMatches.each { printf ' %s (%4.2f)', words[it.v2], it.v1 }
+}

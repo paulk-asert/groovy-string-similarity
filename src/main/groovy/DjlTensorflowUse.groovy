@@ -59,9 +59,18 @@ var embeddings = predictor.predict(phrases)
 
 String[] queries = ['cow', 'cat', 'dog', 'grass', 'Cows eat grass',
  'Poodles are cute', 'The water is turquoise']
-var qembeddings = predictor.predict(queries)
-qembeddings.eachWithIndex { s, i ->
+var qEmbeddings = predictor.predict(queries)
+qEmbeddings.eachWithIndex { s, i ->
     println "\n    ${queries[i]}"
     var bestMatches = embeddings.collect { MathUtil.cosineSimilarity(it, s) }.withIndex().sort { -it.v1 }.take(5)
     bestMatches.each { printf '%s (%4.2f)%n', phrases[it.v2], it.v1 }
+}
+
+String[] words = ['cow', 'bull', 'calf', 'bovine', 'cattle', 'livestock', 'cat', 'kitten', 'feline',
+                  'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
+var wEmbeddings = predictor.predict(words)
+wEmbeddings.eachWithIndex { s, i ->
+    print "\n${words[i]}:"
+    var bestMatches = wEmbeddings.collect { MathUtil.cosineSimilarity(it, s) }.withIndex().findAll{ it.v2 != i }.sort { -it.v1 }.take(5)
+    bestMatches.each { printf ' %s (%4.2f)', words[it.v2], it.v1 }
 }
