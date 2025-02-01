@@ -6,9 +6,9 @@ import java.nio.file.Paths
 var queries = ['bull', 'bovine', 'kitten',
                'hay', 'cow', 'cat', 'dog', 'grass']
 
-//var path = Paths.get(ConceptNet.classLoader.getResource('conceptnet-numberbatch-17-06-300.bin').toURI()).toFile()
+var path = Paths.get(ConceptNet.classLoader.getResource('conceptnet-numberbatch-17-06-300.bin').toURI()).toFile()
 //var path = Paths.get(ConceptNet.classLoader.getResource('glove-wiki-gigaword-300.bin').toURI()).toFile()
-var path = Paths.get(ConceptNet.classLoader.getResource('fasttext-wiki-news-subwords-300.bin').toURI()).toFile()
+//var path = Paths.get(ConceptNet.classLoader.getResource('fasttext-wiki-news-subwords-300.bin').toURI()).toFile()
 Word2Vec w2vModel = WordVectorSerializer.readWord2VecModel(path)
 /*queries.each { a ->
     var results = (queries - a).collectEntries{ b -> [b, w2vModel.similarity("/c/en/$a", "/c/en/$b")] }.sort{-it.value }.take(3)
@@ -16,8 +16,9 @@ Word2Vec w2vModel = WordVectorSerializer.readWord2VecModel(path)
     println "$a: ${w2vModel.wordsNearest("/c/en/$a", 3)}"
 }*/
 
-String[] words = ['cow', 'bull', 'calf', 'bovine', 'cattle', 'livestock', 'cat', 'kitten', 'feline',
-                  'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
+//String[] words = ['cow', 'bull', 'calf', 'bovine', 'cattle', 'livestock', 'cat', 'kitten', 'feline',
+//                  'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
+String[] words = ['/c/en/cow', '/c/en/bull', '/c/en/calf', '/c/en/bovine', '/c/fr/bovin', '/c/fr/vache', '/c/fr/taureau', '/c/de/kuh', '/c/en/kitten', '/c/en/cat', '/c/de/katze']
 
 words.eachWithIndex { w, i ->
     print "\n$w:"
@@ -86,4 +87,16 @@ milk: cow (0.66) water (0.57) cattle (0.53) livestock (0.51) calf (0.50)
 water: milk (0.57) grass (0.52) livestock (0.52) green (0.48) cattle (0.43)
 grass: green (0.57) water (0.52) livestock (0.48) cow (0.48) cattle (0.47)
 green: grass (0.57) water (0.48) bare (0.41) cow (0.39) bear (0.36)
+
+/c/en/cow: /c/fr/vache (0.95) /c/de/kuh (0.95) /c/en/bovine (0.77) /c/fr/bovin (0.75) /c/en/bull (0.54)
+/c/en/bull: /c/fr/taureau (0.91) /c/en/cow (0.54) /c/fr/vache (0.52) /c/de/kuh (0.51) /c/fr/bovin (0.50)
+/c/en/calf: /c/de/kuh (0.53) /c/en/cow (0.53) /c/fr/vache (0.52) /c/en/bovine (0.50) /c/fr/bovin (0.50)
+/c/en/bovine: /c/fr/bovin (0.92) /c/en/cow (0.77) /c/de/kuh (0.75) /c/fr/vache (0.74) /c/en/calf (0.50)
+/c/fr/bovin: /c/en/bovine (0.92) /c/fr/vache (0.79) /c/de/kuh (0.76) /c/en/cow (0.75) /c/fr/taureau (0.58)
+/c/fr/vache: /c/en/cow (0.95) /c/de/kuh (0.93) /c/fr/bovin (0.79) /c/en/bovine (0.74) /c/fr/taureau (0.56)
+/c/fr/taureau: /c/en/bull (0.91) /c/fr/bovin (0.58) /c/fr/vache (0.56) /c/en/cow (0.53) /c/de/kuh (0.53)
+/c/de/kuh: /c/en/cow (0.95) /c/fr/vache (0.93) /c/fr/bovin (0.76) /c/en/bovine (0.75) /c/en/calf (0.53)
+/c/en/kitten: /c/en/cat (0.84) /c/de/katze (0.80) /c/en/bull (0.20) /c/en/cow (0.19) /c/de/kuh (0.18)
+/c/en/cat: /c/de/katze (0.94) /c/en/kitten (0.84) /c/en/bull (0.25) /c/en/cow (0.20) /c/fr/taureau (0.19)
+/c/de/katze: /c/en/cat (0.94) /c/en/kitten (0.80) /c/en/bull (0.24) /c/de/kuh (0.24) /c/fr/taureau (0.21)
  */
