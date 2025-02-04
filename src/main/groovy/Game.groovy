@@ -9,7 +9,6 @@ import org.apache.commons.text.similarity.HammingDistance
 import org.apache.commons.text.similarity.JaccardSimilarity
 import org.apache.commons.text.similarity.LongestCommonSubsequence
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.word2vec.Word2Vec
 
 import java.nio.file.Paths
 
@@ -82,42 +81,51 @@ word2vecModels.each { k, v ->
     }
 }
 
-var hiddenWords = ['pudding', 'rainbow', 'lion', 'watermelon']
-var hidden = hiddenWords[(new Random()).nextInt(hiddenWords.size())]
-var guesses = 'aftershock fruit duping pulling budging bugling buzzing bumping mulling pudding'.split()*.toLowerCase()
-Set possible = 'a'..'z'
+var hiddenWords = ['coffee', 'chocolate', 'glasses', 'overcoat', 'rhythm', 'onion', 'duck', 'beetroot', 'tricky', 'avalanche'].shuffled()
 
-println "Hidden word is $hidden"
+//println "Hidden word is $hidden"
 
-int count = 1
 var console = System.console() ?: System.in.newReader()
 while (true) {
-    print "Possible letters: ${possible.join(' ')}\nGuess the hidden word (turn $count): "
-    var guess = console.readLine() ?: 'tiger'
-    var results = distAlgs.collectEntries { k, method ->
-        var result = '-'
-        try {
-            result = method(guess, hidden)
-            if (k == 'Jaccard') {
-                if (result == '0%') possible -= guess.toSet()
-                else if (result == '100%') possible = guess.toSet()
+    int count = 1
+    Set possible = 'a'..'z'
+    var hidden = hiddenWords.pop()
+    while (true) {
+        print "Possible letters: ${possible.join(' ')}\nGuess the hidden word (turn $count): "
+        var guess = console.readLine() ?: ''
+        if (guess.toLowerCase() in ['quit', 'bye']) {
+            println "Sorry, you quit! The hidden word was '$hidden'."
+            break
+        }
+        var results = distAlgs.collectEntries { k, method ->
+            var result = '-'
+            try {
+                result = method(guess, hidden)
+                if (k == 'Jaccard') {
+                    if (result == '0%') possible -= guess.toSet()
+                    else if (result == '100%') possible = guess.toSet()
+                }
+            } catch (ignore) {
+                //println ignore.message
             }
-        } catch(ignore) { println ignore.message }
-        [k, result]
+            [k, result]
+        }
+        results.each { k, v ->
+            //        var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
+            //        println "${k.padRight(40)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 40, 20), color)}"
+            println "${k.padRight(40)} $v"
+        }
+        println()
+        if (guess == hidden) {
+            println "Congratulations, you guess correctly!"
+            break
+        }
+        if (count++ == 30) {
+            println "Sorry, you took too many turns! The hidden word was '$hidden'."
+            break
+        }
     }
-    results.each { k, v ->
-//        var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
-//        println "${k.padRight(40)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 40, 20), color)}"
-        println "${k.padRight(40)} $v"
-    }
-    println()
-    if (guess == hidden) {
-        println "Congratulations, you guess correctly!"
-        break
-    }
-    if (count++ == 20) {
-        println "Sorry, you took too many turns!"
-        break
-    }
+    if (!hiddenWords) break
+    print '\nPlay again [Y/n]? '
+    if (console.readLine().trim().toLowerCase().toList()[0] == 'n') break
 }
-
