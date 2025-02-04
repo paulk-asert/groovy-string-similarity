@@ -29,14 +29,15 @@ var pairs = [
     ['there', 'their'],
     ['sort', 'sought'],
     ['cow', 'bull'],
-    ['winning', 'grinning'],
+    ['cow', 'cowbell'],
+    ['winners', 'grinners'],
     ['knows', 'nose'],
     ['ground', 'aground'],
     ['grounds', 'aground'],
     ['peeler', 'repeal'],
     ['hippo', 'hippopotamus'],
-    ['kangaroo', 'kangarxx'],
-    ['kangaroo', 'xxngaroo'],
+    ['superstar', 'supersonic'],
+    ['partnership', 'leadership'],
     ['elton john', 'john elton'],
     ['elton john', 'nhoj notle'],
     ['my name is Yoda', 'Yoda my name is'],
@@ -44,15 +45,12 @@ var pairs = [
     ['poodles are cute', 'dachshunds are delightful']
 ]
 
-pairs.each {
-    showSimilarity(simAlgs, *it)
-}
-
-private void showSimilarity(Map algorithms, String... args) {
-    println "      ${args.join(' VS ')}"
-    var results = algorithms.collectEntries { k, method ->
-        [k, method(*args)]
+pairs.each {wordPair ->
+    var results = simAlgs.collectValues { method ->
+        method(*wordPair)
     }
+    // display results ,,,
+    println "      ${wordPair.join(' VS ')}"
     results.sort{ e -> -e.value }.each { k, v ->
         var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
         println "${k.padRight(30)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 20, 20), color)}"
@@ -67,7 +65,7 @@ var distAlgs = [
     })::distance,
     Damerau: new Damerau()::distance,
     OptimalStringAlignment: new OptimalStringAlignment()::distance,
-    LongestCommonSubsequence: new LongestCommonSubsequence()::distance,
+//    'LongestCommonSubsequence (debatty)': new LongestCommonSubsequence()::distance,
     MetricLCS: new MetricLCS()::distance,
     'NGram(2)': new NGram(2)::distance,
     'NGram(4)': new NGram(4)::distance,
@@ -76,9 +74,10 @@ var distAlgs = [
     HammingDistance: new HammingDistance()::apply,
     JaccardDistance: new JaccardDistance()::apply,
     JaroWinklerDistance: new JaroWinklerDistance()::apply,
-//    LevenshteinDistance: LevenshteinDistance.defaultInstance::apply,
-//    LevenshteinDetailedDistance: LevenshteinDetailedDistance.defaultInstance::apply,
-    LongestCommonSubsequenceDistance: new LongestCommonSubsequenceDistance()::apply
+    LevenshteinDetailedDistance: { a, b -> LevenshteinDetailedDistance.defaultInstance.apply(a, b).toString() },
+    LevenshteinDistance: LevenshteinDistance.defaultInstance::apply,
+    'LongestCommonSubsequenceDistance  (commons text)': new LongestCommonSubsequenceDistance()::apply,
+    'LongestCommonSubsequence (commons text)': new org.apache.commons.text.similarity.LongestCommonSubsequence()::apply,
 ]
 
 var phrases = [
@@ -94,21 +93,32 @@ var phrases = [
     'Numbers are odd or even',
     'Red noses',
     'Read knows',
-    'Hippopotamus'
+    'Hippopotamus',
+//    'grounds',
+//    'grinder',
+//    'grounded',
+//    'aground'
+]
+
+var wordDistAlgs = [
+    LongestCommonSubsequence: new org.apache.commons.text.similarity.LongestCommonSubsequence()::apply,
+    Hamming: new HammingDistance()::apply,
+    LevenshteinDetails: { a, b -> LevenshteinDetailedDistance.defaultInstance.apply(a, b).toString() },
+    Levenshtein: LevenshteinDistance.defaultInstance::apply,
 ]
 
 def sortByDist(distAlgs, words, search) {
     println "          $search"
     distAlgs.collectEntries { name, method ->
         var results = words.collectEntries{ w ->
-            var result = Double.MAX_VALUE
+            var result = '-'
             try {
                 result = method(w, search)
             } catch(ignore) {
             }
             [w, result]
         }.toSorted{ e -> e.value }
-        [name, results.take(3).collect{ k, v -> "$k (${sprintf v instanceof Double ? v < 100 ? '%.2f' : '%5.2e' : '%d', v})" }]
+        [name, results.take(3).collect{ k, v -> "$k (${sprintf v instanceof String ? '%s' : v instanceof Double ? v < 100 ? '%.2f' : '%5.2e' : '%d', v})" }]
     }.each{ k, v -> println "$k: ${v.join(', ')}" }
     println()
 }
@@ -117,3 +127,24 @@ sortByDist(distAlgs, phrases, 'The blue car')
 sortByDist(distAlgs, phrases, 'The evening sky')
 sortByDist(distAlgs, phrases, 'Red roses')
 sortByDist(distAlgs, phrases, 'Hippo')
+sortByDist(distAlgs, phrases, 'aground')
+
+displayAll(wordDistAlgs, pairs)
+
+def displayAll(algs, pairs) {
+    pairs.each { pair ->
+        println "${pair.join(' vs ')}: "
+        algs.collectEntries { name, method ->
+            var results = pair.collectEntries { w ->
+                var result = '-'
+                try {
+                    result = method(*pair)
+                } catch (ignore) {
+                }
+                [name, result]
+            }
+        }.each { k, v -> print "$k ($v) " }
+        println()
+    }
+    println()
+}
