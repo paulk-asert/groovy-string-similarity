@@ -1,11 +1,15 @@
+import ai.djl.Application
 import ai.djl.repository.zoo.Criteria
 import ai.djl.training.util.ProgressBar
 import ai.djl.translate.DeferredTranslatorFactory
+import info.debatty.java.stringsimilarity.JaroWinkler
 import info.debatty.java.stringsimilarity.Levenshtein
 import org.apache.commons.codec.language.Metaphone
 import org.apache.commons.text.similarity.HammingDistance
 import org.apache.commons.text.similarity.JaccardSimilarity
 import org.apache.commons.text.similarity.LongestCommonSubsequence
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.word2vec.Word2Vec
 
 import java.nio.file.Paths
 
@@ -21,8 +25,8 @@ var criteria = Criteria.builder()
     .optProgress(new ProgressBar())
     .build()
 
-var model = criteria.loadModel()
-var predictor = model.newPredictor()
+var angleModel = criteria.loadModel()
+var anglePredictor = angleModel.newPredictor()
 //var embeddings = sentences.collect(predictor::predict)
 
 double cosineSimilarity(float[] a, float[] b) {
@@ -32,50 +36,73 @@ double cosineSimilarity(float[] a, float[] b) {
     dotProduct / (sqrt(sumSqA) * sqrt(sumSqB))
 }
 
+System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
+String modelUrl = "https://storage.googleapis.com/tfhub-modules/google/universal-sentence-encoder/4.tar.gz"
+
+var useCriteria = Criteria.builder()
+    .optApplication(Application.NLP.TEXT_EMBEDDING)
+    .setTypes(String[], float[][])
+    .optModelUrls(modelUrl)
+    .optTranslator(new UseTranslator())
+    .optEngine("TensorFlow")
+    .optProgress(new ProgressBar())
+    .build()
+
+var useModel = useCriteria.loadModel()
+var usePredictor = useModel.newPredictor()
+
+var word2vecModels = [
+    ConceptNet: 'conceptnet-numberbatch-17-06-300.bin',
+    Glove: 'glove-wiki-gigaword-300.bin',
+    FastText: 'fasttext-wiki-news-subwords-300.bin'
+].collectValues {
+    def p = Paths.get(ConceptNet.classLoader.getResource(it).toURI()).toFile()
+    println "Loading model for $it ..."
+    WordVectorSerializer.readWord2VecModel(p)
+}
+
 var distAlgs = [
     LongestCommonSubsequence: new LongestCommonSubsequence()::apply,
     Hamming: new HammingDistance()::apply,
     Levenshtein: { a, b -> new Levenshtein().distance(a, b).round() },
     Jaccard: { a, b -> "${(100 * new JaccardSimilarity().apply(a, b)).round()}%" },
+    JaroWinkler: { a, b -> "${(100 * new JaroWinkler()::similarity(a, b)).round()}%" },
     Phonetic: { a, b ->
         var (sa, sb) = new Metaphone(maxCodeLen: 5).with{ [encode(a), encode(b)] }
         var max = [sa.size(), sb.size()].max()
         var m = new LongestCommonSubsequence().apply(sa, sb)
         "${(100 * m/max).round()}%" },
-    Angle: { a, b -> "${(100 * cosineSimilarity(predictor.predict(a), predictor.predict(b))).round()}%" }
+    Angle: { a, b -> "${(100 * cosineSimilarity(anglePredictor.predict(a), anglePredictor.predict(b))).round()}%" },
+    Use: { a, b -> var ans = usePredictor.predict([a, b] as String[]); "${(100 * cosineSimilarity(ans[0], ans[1])).round()}%" }
 ]
+word2vecModels.each { k, v ->
+    distAlgs[k] = { String a, String b ->
+        var (sa, sb) = k == 'ConceptNet' ? ["/c/en/$a", "/c/en/$b"] : [a, b]
+        "${(100 * v.similarity(sa, sb)).round()}%"
+    }
+}
 
-//println new Soundex().difference('navy', 'envy')
-//println 4 - new Metaphone().with{new Levenshtein().distance(encode('navy'), encode('envy')) }
-//println new Metaphone().encode('navy')
-//println new Metaphone().encode('envy')
-//var answer = 'peace'
-//var guesses = 'piece peas pizza calm place pecan'.split()
-//var answer = 'upper'
-//var guesses = 'lower udder purer touch higher above capital peruse'.split()
-//var answer = 'envy'
-//var guesses = 'greed navy green environment envious enviable jealous envy'.split()
-//var answer = 'green'
-//var guesses = 'rainbow stow braid anger groan grass green'.split()
-//var answer = 'steak'
-//var guesses = 'aftershock fish meat trace break stake'.split()
-var answer = 'pudding'
-//var guesses = 'aftershock egg pig pruning pudding'.split() // juice sushi pulling pudding mulling
-var guesses = 'aftershock fruit budging bugling buzzing bumping mulling pudding'.split()*.toLowerCase()
-//var guesses = 'egg aftershock pig pruning pudding'.split()
+var hiddenWords = ['pudding', 'rainbow', 'lion', 'watermelon']
+var hidden = hiddenWords[(new Random()).nextInt(hiddenWords.size())]
+var guesses = 'aftershock fruit duping pulling budging bugling buzzing bumping mulling pudding'.split()*.toLowerCase()
 Set possible = 'a'..'z'
 
-guesses.each {guess ->
-    println "      $guess $answer (possible: ${possible.join(' ')})"
+println "Hidden word is $hidden"
+
+int count = 1
+var console = System.console() ?: System.in.newReader()
+while (true) {
+    print "Possible letters: ${possible.join(' ')}\nGuess the hidden word (turn $count): "
+    var guess = console.readLine() ?: 'tiger'
     var results = distAlgs.collectEntries { k, method ->
         var result = '-'
         try {
-            result = method(guess, answer)
+            result = method(guess, hidden)
             if (k == 'Jaccard') {
                 if (result == '0%') possible -= guess.toSet()
                 else if (result == '100%') possible = guess.toSet()
             }
-        } catch(ignore) { }
+        } catch(ignore) { println ignore.message }
         [k, result]
     }
     results.each { k, v ->
@@ -84,5 +111,13 @@ guesses.each {guess ->
         println "${k.padRight(40)} $v"
     }
     println()
+    if (guess == hidden) {
+        println "Congratulations, you guess correctly!"
+        break
+    }
+    if (count++ == 20) {
+        println "Sorry, you took too many turns!"
+        break
+    }
 }
 

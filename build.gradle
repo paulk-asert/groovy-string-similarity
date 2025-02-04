@@ -35,15 +35,18 @@ dependencies {
         runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:windows-x86_64'
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:osx-aarch64"
-        runtimeOnly 'org.bytedeco:javacpp:1.5.11:ios-arm64'
+        runtimeOnly 'org.bytedeco:javacpp:1.5.11:macosx-arm64'
         runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:ios-arm64'
+        runtimeOnly "org.nd4j:nd4j-native:$nd4jVersion:macosx-arm64"
     } else if (Os.isFamily(Os.FAMILY_UNIX)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:linux-x86_64"
         runtimeOnly 'org.bytedeco:javacpp:1.5.11:linux-x86_64'
         runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:linux-x86_64'
     }
 //    runtimeOnly "org.slf4j:slf4j-jdk14:$slf4jVersion"
-    runtimeOnly("org.nd4j:nd4j-native-platform:$nd4jVersion") {
+    runtimeOnly("org.nd4j:nd4j-native:$nd4jVersion") {
+//        runtimeOnly("org.nd4j:nd4j-native-platform:$nd4jVersion") {
+//    runtimeOnly("org.nd4j:nd4j-cuda-11.6-platform:$nd4jVersion") {
         exclude group: 'org.bytedeco', module: 'javacpp-presets'
         exclude group: 'org.bytedeco', module: 'javacpp'
         exclude group: 'org.bytedeco', module: 'javacpp-platform'
@@ -68,11 +71,11 @@ dependencies {
         exclude group: 'org.bytedeco', module: 'openblas'
         exclude group: 'com.twelvemonkeys.imageio'
     }
-    runtimeOnly('org.bytedeco:openblas:0.3.28-1.5.11') {
-        transitive = false
+    runtimeOnly('org.bytedeco:openblas-platform:0.3.28-1.5.11') {
+//        transitive = false
     }
     runtimeOnly('org.bytedeco:javacpp:1.5.11') {
-        transitive = false
+//        transitive = false
     }
 }
 
