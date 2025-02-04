@@ -93,7 +93,7 @@ while (true) {
     while (true) {
         print "Possible letters: ${possible.join(' ')}\nGuess the hidden word (turn $count): "
         var guess = console.readLine() ?: ''
-        if (guess.toLowerCase() in ['quit', 'bye']) {
+        if (guess.trim().toLowerCase() in ['quit', 'bye']) {
             println "Sorry, you quit! The hidden word was '$hidden'."
             break
         }
