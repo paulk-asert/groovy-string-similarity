@@ -3,10 +3,12 @@ import ai.djl.repository.zoo.Criteria
 import ai.djl.training.util.ProgressBar
 import ai.djl.translate.DeferredTranslatorFactory
 import info.debatty.java.stringsimilarity.JaroWinkler
-import info.debatty.java.stringsimilarity.Levenshtein
+import info.debatty.java.stringsimilarity.NormalizedLevenshtein
 import org.apache.commons.codec.language.Metaphone
+import org.apache.commons.codec.language.Soundex
 import org.apache.commons.text.similarity.HammingDistance
 import org.apache.commons.text.similarity.JaccardSimilarity
+import org.apache.commons.text.similarity.LevenshteinDetailedDistance
 import org.apache.commons.text.similarity.LongestCommonSubsequence
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 
@@ -14,7 +16,7 @@ import java.nio.file.Paths
 
 import static java.lang.Math.sqrt
 
-//System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
+System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 
 var path = Paths.get(DjlPytorchAngle.classLoader.getResource('UAE-Large-V1.zip').toURI())
 var criteria = Criteria.builder()
@@ -35,7 +37,6 @@ double cosineSimilarity(float[] a, float[] b) {
     dotProduct / (sqrt(sumSqA) * sqrt(sumSqB))
 }
 
-System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 String modelUrl = "https://storage.googleapis.com/tfhub-modules/google/universal-sentence-encoder/4.tar.gz"
 
 var useCriteria = Criteria.builder()
@@ -51,9 +52,9 @@ var useModel = useCriteria.loadModel()
 var usePredictor = useModel.newPredictor()
 
 var word2vecModels = [
-    ConceptNet: 'conceptnet-numberbatch-17-06-300.bin',
     Glove: 'glove-wiki-gigaword-300.bin',
-    FastText: 'fasttext-wiki-news-subwords-300.bin'
+    FastText: 'fasttext-wiki-news-subwords-300.bin',
+    ConceptNet: 'conceptnet-numberbatch-17-06-300.bin',
 ].collectValues {
     def p = Paths.get(ConceptNet.classLoader.getResource(it).toURI()).toFile()
     println "Loading model for $it ..."
@@ -62,34 +63,57 @@ var word2vecModels = [
 
 var distAlgs = [
     LongestCommonSubsequence: new LongestCommonSubsequence()::apply,
-    Hamming: new HammingDistance()::apply,
-    Levenshtein: { a, b -> new Levenshtein().distance(a, b).round() },
+//    Hamming: new HammingDistance()::apply,
+    Levenshtein: { a, b -> LevenshteinDetailedDistance.defaultInstance.apply(a, b).toString() },
     Jaccard: { a, b -> "${(100 * new JaccardSimilarity().apply(a, b)).round()}%" },
-    JaroWinkler: { a, b -> "${(100 * new JaroWinkler()::similarity(a, b)).round()}%" },
+    JaroWinkler: { a, b ->
+        "FWD ${(100 * new JaroWinkler().similarity(a, b)).round()}% / REV ${(100 * new JaroWinkler().similarity(a.reverse(), b.reverse())).round()}%"
+    },
     Phonetic: { a, b ->
-        var (sa, sb) = new Metaphone(maxCodeLen: 5).with{ [encode(a), encode(b)] }
-        var max = [sa.size(), sb.size()].max()
-        var m = new LongestCommonSubsequence().apply(sa, sb)
-        "${(100 * m/max).round()}%" },
-    Angle: { a, b -> "${(100 * cosineSimilarity(anglePredictor.predict(a), anglePredictor.predict(b))).round()}%" },
-    Use: { a, b -> var ans = usePredictor.predict([a, b] as String[]); "${(100 * cosineSimilarity(ans[0], ans[1])).round()}%" }
-]
-word2vecModels.each { k, v ->
-    distAlgs[k] = { String a, String b ->
-        var (sa, sb) = k == 'ConceptNet' ? ["/c/en/$a", "/c/en/$b"] : [a, b]
-        "${(100 * v.similarity(sa, sb)).round()}%"
+        var sDiff = new Soundex().difference(a, b)
+        var (ma, mb) = new Metaphone(maxCodeLen: 5).with{ [encode(a), encode(b)] }
+        var max = [ma.size(), mb.size()].max()
+        var lcs = new LongestCommonSubsequence().apply(ma, mb)
+        var jw = new JaroWinkler().similarity(ma, mb)
+        "Metaphone ${(50 * lcs/max + 50 * jw).round()}% / Soundex ${sDiff * 25}%" },
+    Meaning: { a, b ->
+        var ang = (100 * cosineSimilarity(anglePredictor.predict(a), anglePredictor.predict(b))).round()
+        var uData = usePredictor.predict([a, b] as String[])
+        var use = (100 * cosineSimilarity(uData[0], uData[1])).round()
+        var cNet = (100 * word2vecModels.ConceptNet.similarity("/c/en/$a", "/c/en/$b")).round()
+        var glv = (100 * word2vecModels.Glove.similarity(a, b)).round()
+        var ft = (100 * word2vecModels.FastText.similarity(a, b)).round()
+        "Angle $ang% / Use $use% / ConceptNet $cNet% / Glove $glv% / FastText $ft%"
     }
-}
+]
 
-var hiddenWords = ['coffee', 'chocolate', 'glasses', 'overcoat', 'rhythm', 'onion', 'duck', 'beetroot', 'tricky', 'avalanche'].shuffled()
-
-//println "Hidden word is $hidden"
+var hiddenWords = ['kumquat', 'pudding', 'elevator', 'book', 'elephant', 'rhythm', 'onion', 'telescope', 'beetroot', 'tricky', 'avalanche', 'submarine'].shuffled()
 
 var console = System.console() ?: System.in.newReader()
+var lev = new NormalizedLevenshtein()
 while (true) {
     int count = 1
     Set possible = 'a'..'z'
     var hidden = hiddenWords.pop()
+//    println "Hidden word is $hidden"
+    var cClues = word2vecModels.ConceptNet.wordsNearest("/c/en/$hidden", 200)
+        .findAll{ it.startsWith('/c/en/') }
+        .collect{ it - '/c/en/' }
+        .findAll{ lev.similarity(it, hidden) < 0.8 }
+    var gClues = word2vecModels.Glove.wordsNearest(hidden, 20)
+        .findAll{ lev.similarity(it, hidden) < 0.8 }
+    var fClues = word2vecModels.FastText.wordsNearest(hidden, 20)
+        .findAll{ lev.similarity(it, hidden) < 0.8 }
+    def groupedClues = [:]
+    groupedClues[1] = (cClues.drop(4).take(6) + gClues.drop(4).take(6) + fClues.drop(4).take(6))
+        .findAll{ !it.contains(hidden) && lev.similarity(it, hidden) < 0.4 }
+        .unique().sort{ lev.similarity(it, hidden) }.take(2).toSet()
+    groupedClues[2] = ((cClues.drop(2).take(6) + gClues.drop(2).take(6) + fClues.drop(2).take(6))
+        .findAll{ !it.contains(hidden) && lev.similarity(it, hidden) < 0.6 }
+        .unique().sort{ lev.similarity(it, hidden) }.toSet() - groupedClues[1]).take(3)
+    groupedClues[3] = ((cClues.take(8) + gClues.take(8) + fClues.take(8))
+        .findAll{ !it.contains(hidden) }
+        .unique().sort{ -lev.similarity(it, hidden) }.toSet() - groupedClues[1] - groupedClues[2]).take(4)
     while (true) {
         print "Possible letters: ${possible.join(' ')}\nGuess the hidden word (turn $count): "
         var guess = console.readLine() ?: ''
@@ -113,11 +137,15 @@ while (true) {
         results.each { k, v ->
             //        var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
             //        println "${k.padRight(40)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 40, 20), color)}"
-            println "${k.padRight(40)} $v"
+            println "${k.padRight(30)} $v"
         }
         println()
+        if (count % 8 == 0) {
+            def clue = groupedClues[count.intdiv(8)]
+            if (clue) println "You seem to be having trouble, here are one or more clues: ${clue.join(', ')}"
+        }
         if (guess == hidden) {
-            println "Congratulations, you guess correctly!"
+            println "Congratulations, you guessed correctly!"
             break
         }
         if (count++ == 30) {
