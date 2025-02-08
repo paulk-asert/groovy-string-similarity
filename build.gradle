@@ -84,6 +84,7 @@ sourceSets.main.allSource.files.each { file ->
     tasks.register("run$name", JavaExec) {
         dependsOn compileGroovy
         group = 'Application'
+        standardInput = System.in
         description = "Run $file.name as a JVM application/Groovy script"
         classpath = sourceSets.main.runtimeClasspath
         mainClass = name

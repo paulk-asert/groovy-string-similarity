@@ -6,7 +6,6 @@ import info.debatty.java.stringsimilarity.JaroWinkler
 import info.debatty.java.stringsimilarity.NormalizedLevenshtein
 import org.apache.commons.codec.language.Metaphone
 import org.apache.commons.codec.language.Soundex
-import org.apache.commons.text.similarity.HammingDistance
 import org.apache.commons.text.similarity.JaccardSimilarity
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance
 import org.apache.commons.text.similarity.LongestCommonSubsequence
@@ -18,6 +17,7 @@ import static java.lang.Math.sqrt
 
 System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
 
+var debug = true
 var path = Paths.get(DjlPytorchAngle.classLoader.getResource('UAE-Large-V1.zip').toURI())
 var criteria = Criteria.builder()
     .setTypes(String, float[])
@@ -28,7 +28,6 @@ var criteria = Criteria.builder()
 
 var angleModel = criteria.loadModel()
 var anglePredictor = angleModel.newPredictor()
-//var embeddings = sentences.collect(predictor::predict)
 
 double cosineSimilarity(float[] a, float[] b) {
     var dotProduct = a.indices.sum{ a[it] * b[it] }
@@ -61,21 +60,32 @@ var word2vecModels = [
     WordVectorSerializer.readWord2VecModel(p)
 }
 
+var soundex = new Soundex()
+var jw = new JaroWinkler()
 var distAlgs = [
     LongestCommonSubsequence: new LongestCommonSubsequence()::apply,
-//    Hamming: new HammingDistance()::apply,
     Levenshtein: { a, b -> LevenshteinDetailedDistance.defaultInstance.apply(a, b).toString() },
-    Jaccard: { a, b -> "${(100 * new JaccardSimilarity().apply(a, b)).round()}%" },
+    Jaccard: { a, b ->
+        if (debug) {
+            var sa = a.toSet(); var sb = b.toSet()
+            var top = sa.intersect(sb).size(); var bottom = sa.plus(sb).size()
+            "${(100 * new JaccardSimilarity().apply(a, b)).round()}%  ($top/$bottom)"
+        } else {
+            "${(100 * new JaccardSimilarity().apply(a, b)).round()}%"
+        }
+    },
     JaroWinkler: { a, b ->
-        "FWD ${(100 * new JaroWinkler().similarity(a, b)).round()}% / REV ${(100 * new JaroWinkler().similarity(a.reverse(), b.reverse())).round()}%"
+        var fwd = (100 * jw.similarity(a, b)).round()
+        var rev = (100 * jw.similarity(a.reverse(), b.reverse())).round()
+        "PREFIX $fwd% / SUFFIX $rev%"
     },
     Phonetic: { a, b ->
-        var sDiff = new Soundex().difference(a, b)
-        var (ma, mb) = new Metaphone(maxCodeLen: 5).with{ [encode(a), encode(b)] }
+        var sDiff = soundex.difference(a, b)
+        var (ma, mb) = new Metaphone(maxCodeLen: 10).with{ [encode(a), encode(b)] }
         var max = [ma.size(), mb.size()].max()
         var lcs = new LongestCommonSubsequence().apply(ma, mb)
-        var jw = new JaroWinkler().similarity(ma, mb)
-        "Metaphone ${(50 * lcs/max + 50 * jw).round()}% / Soundex ${sDiff * 25}%" },
+        var jws = jw.similarity(ma, mb)
+        "Metaphone=$ma ${(50 * lcs/max + 50 * jws).round()}% / Soundex=${soundex.encode(a)} ${sDiff * 25}%" },
     Meaning: { a, b ->
         var ang = (100 * cosineSimilarity(anglePredictor.predict(a), anglePredictor.predict(b))).round()
         var uData = usePredictor.predict([a, b] as String[])
@@ -87,7 +97,7 @@ var distAlgs = [
     }
 ]
 
-var hiddenWords = ['kumquat', 'pudding', 'elevator', 'book', 'elephant', 'rhythm', 'onion', 'telescope', 'beetroot', 'tricky', 'avalanche', 'submarine'].shuffled()
+var hiddenWords = ['carrot','elevator', 'kangaroo', 'banana', 'kumquat', 'elephant', 'pudding']//['kumquat', 'pudding', 'elevator', 'book', 'elephant', 'rhythm', 'onion', 'telescope', 'beetroot', 'tricky', 'avalanche', 'submarine'].shuffled()
 
 var console = System.console() ?: System.in.newReader()
 var lev = new NormalizedLevenshtein()
@@ -95,7 +105,7 @@ while (true) {
     int count = 1
     Set possible = 'a'..'z'
     var hidden = hiddenWords.pop()
-//    println "Hidden word is $hidden"
+    if (debug) println "Hidden word is $hidden"
     var cClues = word2vecModels.ConceptNet.wordsNearest("/c/en/$hidden", 200)
         .findAll{ it.startsWith('/c/en/') }
         .collect{ it - '/c/en/' }
@@ -105,13 +115,13 @@ while (true) {
     var fClues = word2vecModels.FastText.wordsNearest(hidden, 20)
         .findAll{ lev.similarity(it, hidden) < 0.8 }
     def groupedClues = [:]
-    groupedClues[1] = (cClues.drop(4).take(6) + gClues.drop(4).take(6) + fClues.drop(4).take(6))
-        .findAll{ !it.contains(hidden) && lev.similarity(it, hidden) < 0.4 }
+    groupedClues[1] = (cClues.drop(4).take(4) + gClues.drop(4).take(4) + fClues.drop(4).take(4))
+        .findAll{ !it.contains(hidden) && lev.similarity(it, hidden) < 0.25 }
         .unique().sort{ lev.similarity(it, hidden) }.take(2).toSet()
     groupedClues[2] = ((cClues.drop(2).take(6) + gClues.drop(2).take(6) + fClues.drop(2).take(6))
-        .findAll{ !it.contains(hidden) && lev.similarity(it, hidden) < 0.6 }
+        .findAll{ !it.contains(hidden) && lev.similarity(it, hidden) < 0.5 }
         .unique().sort{ lev.similarity(it, hidden) }.toSet() - groupedClues[1]).take(3)
-    groupedClues[3] = ((cClues.take(8) + gClues.take(8) + fClues.take(8))
+    groupedClues[3] = ((cClues.take(6) + gClues.take(6) + fClues.take(6))
         .findAll{ !it.contains(hidden) }
         .unique().sort{ -lev.similarity(it, hidden) }.toSet() - groupedClues[1] - groupedClues[2]).take(4)
     while (true) {
@@ -120,6 +130,12 @@ while (true) {
         if (guess.trim().toLowerCase() in ['quit', 'bye']) {
             println "Sorry, you quit! The hidden word was '$hidden'."
             break
+        }
+        if (guess.trim().toLowerCase() == 'restart') {
+            println "Restarting."
+            count = 1
+            possible = ('a'..'z').toSet()
+            continue
         }
         var results = distAlgs.collectEntries { k, method ->
             var result = '-'
@@ -130,7 +146,7 @@ while (true) {
                     else if (result == '100%') possible = guess.toSet()
                 }
             } catch (ignore) {
-                //println ignore.message
+                if (debug) println ignore.message
             }
             [k, result]
         }
