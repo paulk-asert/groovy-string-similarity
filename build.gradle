@@ -10,7 +10,7 @@ repositories {
 }
 
 def slf4jVersion = '2.0.16'
-def djlVersion = '0.31.1'
+def djlVersion = '0.32.0'
 def nd4jVersion= '1.0.0-M2.1'
 
 dependencies {
@@ -19,7 +19,7 @@ dependencies {
     implementation 'org.apache.commons:commons-text:1.13.0'
     implementation 'commons-codec:commons-codec:1.18.0'
     implementation 'com.diogonunes:JColor:5.5.1'
-    implementation 'org.openrefine:main:3.9-beta1'
+    implementation 'org.openrefine:main:3.9.0'
 
     implementation "ai.djl:api:$djlVersion"
     implementation "ai.djl.pytorch:pytorch-engine:$djlVersion"
