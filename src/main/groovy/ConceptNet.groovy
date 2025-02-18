@@ -6,10 +6,11 @@ import java.nio.file.Paths
 var queries = ['bull', 'bovine', 'kitten',
                'hay', 'cow', 'cat', 'dog', 'grass']
 
-var path = Paths.get(ConceptNet.classLoader.getResource('conceptnet-numberbatch-17-06-300.bin').toURI()).toFile()
-//var path = Paths.get(ConceptNet.classLoader.getResource('glove-wiki-gigaword-300.bin').toURI()).toFile()
-//var path = Paths.get(ConceptNet.classLoader.getResource('fasttext-wiki-news-subwords-300.bin').toURI()).toFile()
-Word2Vec w2vModel = WordVectorSerializer.readWord2VecModel(path)
+//var modelName = 'fasttext-wiki-news-subwords-300.bin'
+var modelName = 'conceptnet-numberbatch-17-06-300.bin'
+//var modelName = 'glove-wiki-gigaword-300.bin'
+var path = Paths.get(ConceptNet.classLoader.getResource(modelName).toURI()).toFile()
+Word2Vec model = WordVectorSerializer.readWord2VecModel(path)
 /*queries.each { a ->
     var results = (queries - a).collectEntries{ b -> [b, w2vModel.similarity("/c/en/$a", "/c/en/$b")] }.sort{-it.value }.take(3)
     println "$a: ${results.collect{ k, v -> k + sprintf(' (%.2f) ', v) }.join()}"
@@ -20,18 +21,15 @@ Word2Vec w2vModel = WordVectorSerializer.readWord2VecModel(path)
 //                  'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
 String[] words = ['/c/en/cow', '/c/en/bull', '/c/en/calf', '/c/en/bovine', '/c/fr/bovin', '/c/fr/vache', '/c/fr/taureau', '/c/de/kuh', '/c/en/kitten', '/c/en/cat', '/c/de/katze']
 
-words.eachWithIndex { w, i ->
-    print "\n$w:"
-    var bestMatches = words.collect { w2vModel.similarity(w, it) }.withIndex().findAll{ it.v2 != i }.sort { -it.v1 }.take(5)
-    bestMatches.each { printf ' %s (%4.2f)', words[it.v2], it.v1 }
+//words.eachWithIndex { w, i ->
+println """ConceptNet similarity to /c/en/cow: ${
+    words
+        .collectEntries { ["/c/en/$it", model.similarity('/c/en/cow', "/c/en/$it")] }
+        .sort { -it.value }
+        .collectValues('%4.2f'::formatted)
 }
-
-/*
-words.eachWithIndex { w, i ->
-    print "\n$w:"
-    var bestMatches = words.collect { w2vModel.similarity("/c/en/$w", "/c/en/$it") }.withIndex().findAll{ it.v2 != i }.sort { -it.v1 }.take(5)
-    bestMatches.each { printf ' %s (%4.2f)', words[it.v2], it.v1 }
-}*/
+Nearest words in vocab: ${model.wordsNearest('/c/en/cow', 4)}
+"""
 
 /*
 conceptnet
