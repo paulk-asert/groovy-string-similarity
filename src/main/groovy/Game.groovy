@@ -10,6 +10,8 @@ import org.apache.commons.text.similarity.JaccardSimilarity
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance
 import org.apache.commons.text.similarity.LongestCommonSubsequence
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.word2vec.Word2Vec
+import org.hipparchus.stat.projection.PCA
 
 import java.nio.file.Paths
 
@@ -50,7 +52,7 @@ var useCriteria = Criteria.builder()
 var useModel = useCriteria.loadModel()
 var usePredictor = useModel.newPredictor()
 
-var word2vecModels = [
+Map<String, Word2Vec> word2vecModels = [
     Glove: 'glove-wiki-gigaword-300.bin',
     FastText: 'fasttext-wiki-news-subwords-300.bin',
     ConceptNet: 'conceptnet-numberbatch-17-06-300.bin',
@@ -62,6 +64,7 @@ var word2vecModels = [
 
 var soundex = new Soundex()
 var jw = new JaroWinkler()
+var js = new JaccardSimilarity()
 var distAlgs = [
     LongestCommonSubsequence: new LongestCommonSubsequence()::apply,
     Levenshtein: { a, b -> LevenshteinDetailedDistance.defaultInstance.apply(a, b).toString() },
@@ -69,9 +72,9 @@ var distAlgs = [
         if (debug) {
             var sa = a.toSet(); var sb = b.toSet()
             var top = sa.intersect(sb).size(); var bottom = sa.plus(sb).size()
-            "${(100 * new JaccardSimilarity().apply(a, b)).round()}%  ($top/$bottom)"
+            "${(100 * js.apply(a, b)).round()}%  ($top/$bottom)"
         } else {
-            "${(100 * new JaccardSimilarity().apply(a, b)).round()}%"
+            "${(100 * js.apply(a, b)).round()}%"
         }
     },
     JaroWinkler: { a, b ->
@@ -93,7 +96,7 @@ var distAlgs = [
         var cNet = (100 * word2vecModels.ConceptNet.similarity("/c/en/$a", "/c/en/$b")).round()
         var glv = (100 * word2vecModels.Glove.similarity(a, b)).round()
         var ft = (100 * word2vecModels.FastText.similarity(a, b)).round()
-        "Angle $ang% / Use $use% / ConceptNet $cNet% / Glove $glv% / FastText $ft%"
+        "AnglE $ang% / Use $use% / ConceptNet $cNet% / Glove $glv% / FastText $ft%"
     }
 ]
 
@@ -142,8 +145,8 @@ while (true) {
             try {
                 result = method(guess, hidden)
                 if (k == 'Jaccard') {
-                    if (result == '0%') possible -= guess.toSet()
-                    else if (result == '100%') possible = guess.toSet()
+                    if (result.startsWith('0%')) possible -= guess.toSet()
+                    else if (result.startsWith('100%')) possible = guess.toSet()
                 }
             } catch (ignore) {
                 if (debug) println ignore.message
@@ -156,13 +159,13 @@ while (true) {
             println "${k.padRight(30)} $v"
         }
         println()
-        if (count % 8 == 0) {
-            def clue = groupedClues[count.intdiv(8)]
-            if (clue) println "You seem to be having trouble, here are one or more clues: ${clue.join(', ')}"
-        }
         if (guess == hidden) {
             println "Congratulations, you guessed correctly!"
             break
+        }
+        if (count % 8 == 0) {
+            def clue = groupedClues[count.intdiv(8)]
+            if (clue) println "You seem to be having trouble, here are one or more clues: ${clue.join(', ')}"
         }
         if (count++ == 30) {
             println "Sorry, you took too many turns! The hidden word was '$hidden'."
