@@ -17,6 +17,7 @@ var simAlgs = [
     RatcliffObershelp: new RatcliffObershelp()::similarity,
     SorensenDice: new SorensenDice()::similarity,
     Cosine: new Cosine()::similarity,
+    WordleLike: this::wordleSimilaritySliding
 ]
 
 var pairs = [
@@ -38,6 +39,8 @@ var pairs = [
     ['hippo', 'hippopotamus'],
     ['superstar', 'supersonic'],
     ['partnership', 'leadership'],
+    ['pihsrentrap', 'pihsredael'],
+    ['kitten', 'sitting'],
     ['elton john', 'john elton'],
     ['elton john', 'nhoj notle'],
     ['my name is Yoda', 'Yoda my name is'],
@@ -45,12 +48,12 @@ var pairs = [
     ['poodles are cute', 'dachshunds are delightful']
 ]
 
-pairs.each {wordPair ->
-    var results = simAlgs.collectValues { method ->
-        method(*wordPair)
+pairs.each { one, two ->
+    var results = simAlgs.collectValues { alg ->
+        alg(one, two)
     }
-    // display results ,,,
-    println "      ${wordPair.join(' VS ')}"
+    // display results ...
+    println "      $one VS $two"
     results.sort{ e -> -e.value }.each { k, v ->
         var color = v >= 0.8 ? GREEN_TEXT() : RED_TEXT()
         println "${k.padRight(30)} ${sprintf '%5.2f', v} ${colorize(bar((v * 20) as int, 0, 20, 20), color)}"
@@ -148,3 +151,73 @@ def displayAll(algs, pairs) {
     }
     println()
 }
+/**
+ * Compute standard Wordle distance for equal-length words.
+ */
+int wordleDistanceEqual(String guess, String target) {
+    int n = guess.size()
+    def greens = (0..<n).findAll { guess[it] == target[it] }
+    int G = greens.size()
+
+    def guessCounts = [:].withDefault { 0 }
+    def targetCounts = [:].withDefault { 0 }
+
+    (0..<n).each { i ->
+        if (!(i in greens)) {
+            guessCounts[guess[i]]++
+            targetCounts[target[i]]++
+        }
+    }
+
+    int Y = guessCounts.collect { k, v -> Math.min(v, targetCounts[k]) }.sum() ?: 0
+
+    return 2 * (n - G) - Y
+}
+
+/**
+ * Compute Wordle-like distance using sliding window alignment.
+ * Extra letters at start/end are treated as gray.
+ */
+int wordleDistanceSliding(String a, String b) {
+    // Identify shorter and longer word
+    def shorter = a.size() <= b.size() ? a : b
+    def longer = a.size() <= b.size() ? b : a
+    int lenShort = shorter.size()
+    int lenLong = longer.size()
+
+    int minDistance = Integer.MAX_VALUE
+
+    // Try all possible alignments
+    for (int offset = 0; offset <= lenLong - lenShort; offset++) {
+        String window = longer[offset..<offset+lenShort]
+        int distance = wordleDistanceEqual(shorter, window)
+
+        // Padding cost: each extra letter outside window counts as gray (2)
+        int padding = (lenLong - lenShort) * 2
+        distance += padding
+
+        minDistance = Math.min(minDistance, distance)
+    }
+
+    return minDistance
+}
+
+/**
+ * Normalized Wordle-like similarity in [0,1].
+ * Based on the maximum length of the two words.
+ */
+double wordleSimilaritySliding(String a, String b) {
+    int n = Math.max(a.size(), b.size())
+    int D = wordleDistanceSliding(a, b)
+    return 1 - (D / (2.0 * n))
+}
+
+// Examples
+//println "Distance: ${wordleDistanceSliding('CANDY', 'CRANE')}, " +
+//    "Similarity: ${wordleSimilaritySliding('CANDY', 'CRANE')}"
+//
+//println "Distance: ${wordleDistanceSliding('CAN', 'CRANE')}, " +
+//    "Similarity: ${wordleSimilaritySliding('CAN', 'CRANE')}"
+//
+//println "Distance: ${wordleDistanceSliding('CANDIES', 'CRANE')}, " +
+//    "Similarity: ${wordleSimilaritySliding('CANDIES', 'CRANE')}"
