@@ -1,35 +1,40 @@
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.word2vec.Word2Vec
 
 import java.nio.file.Paths
 
 var queries = ['bull', 'bovine', 'kitten',
                'hay', 'cow', 'cat', 'dog', 'grass']
 
-//var modelName = 'fasttext-wiki-news-subwords-300.bin'
-var modelName = 'conceptnet-numberbatch-17-06-300.bin'
-//var modelName = 'glove-wiki-gigaword-300.bin'
-var path = Paths.get(ConceptNet.classLoader.getResource(modelName).toURI()).toFile()
-Word2Vec model = WordVectorSerializer.readWord2VecModel(path)
-/*queries.each { a ->
-    var results = (queries - a).collectEntries{ b -> [b, w2vModel.similarity("/c/en/$a", "/c/en/$b")] }.sort{-it.value }.take(3)
-    println "$a: ${results.collect{ k, v -> k + sprintf(' (%.2f) ', v) }.join()}"
-    println "$a: ${w2vModel.wordsNearest("/c/en/$a", 3)}"
-}*/
+//var modelInfo = [prefix:'', name:'fasttext-wiki-news-subwords-300.bin']
+var modelInfo = [prefix:'', name:'glove-wiki-gigaword-300.bin']
+//var modelInfo = [prefix:'/c/en/', name:'conceptnet-numberbatch-17-06-300.bin']
 
-//String[] words = ['cow', 'bull', 'calf', 'bovine', 'cattle', 'livestock', 'cat', 'kitten', 'feline',
-//                  'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
-String[] words = ['/c/en/cow', '/c/en/bull', '/c/en/calf', '/c/en/bovine', '/c/fr/bovin', '/c/fr/vache', '/c/fr/taureau', '/c/de/kuh', '/c/en/kitten', '/c/en/cat', '/c/de/katze']
+var name = modelInfo.name
+var prefix = modelInfo.prefix
+var path = Paths.get(Dl4jWord2Vec.classLoader.getResource(name).toURI()).toFile()
+var model = WordVectorSerializer.readWord2VecModel(path)
 
-//words.eachWithIndex { w, i ->
-println """ConceptNet similarity to /c/en/cow: ${
-    words
-        .collectEntries { ["/c/en/$it", model.similarity('/c/en/cow', "/c/en/$it")] }
-        .sort { -it.value }
-        .collectValues('%4.2f'::formatted)
+queries.each { a ->
+    var results = (queries - a).collectEntries{ b ->
+        [b, model.similarity("$prefix$a", "$prefix$b")]
+    }.sort{-it.value }.take(3)
+    println "$a: ${results.collect{ k, v -> sprintf('%s (%.2f) ', k, v) }.join()}"
+    println "$a: ${model.wordsNearest("$prefix$a", 3)}"
 }
-Nearest words in vocab: ${model.wordsNearest('/c/en/cow', 4)}
-"""
+
+String[] words = ['bull', 'calf', 'bovine', 'cattle', 'livestock', 'horse']
+//String[] words = ['cow', 'bull', 'calf', 'bovine', 'cattle', 'livestock', 'cat', 'kitten', 'feline', 'hippo', 'bear', 'bare', 'milk', 'water', 'grass', 'green']
+//String[] words = ['/c/en/cow', '/c/en/bull', '/c/en/calf', '/c/en/bovine', '/c/fr/bovin', '/c/fr/vache', '/c/fr/taureau', '/c/de/kuh', '/c/en/kitten', '/c/en/cat', '/c/de/katze']
+
+var target = "${prefix}cow"
+var result = words
+    .collectEntries { w -> ["$prefix$w", model.similarity(target, "$prefix$w")] }
+    .sort { -it.value }
+    .collectValues('%4.2f'::formatted)
+
+var nearest = model.wordsNearest(target, 4)
+println "Word2Vec(${name - '.bin'}) similarity to $target:\n$result"
+println "Nearest words in vocab: $nearest"
 
 /*
 conceptnet
