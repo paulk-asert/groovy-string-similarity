@@ -42,7 +42,7 @@ class UseTranslator implements NoBatchifyTranslator<String[], float[][]> {
 }
 
 System.setProperty('org.slf4j.simpleLogger.defaultLogLevel', 'info')
-String modelUrl = "https://storage.googleapis.com/tfhub-modules/google/universal-sentence-encoder/4.tar.gz"
+String modelUrl = "https://tfhub.dev/google/universal-sentence-encoder/4"
 
 var criteria = Criteria.builder()
     .optApplication(Application.NLP.TEXT_EMBEDDING)
