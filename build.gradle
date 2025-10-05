@@ -81,7 +81,9 @@ dependencies {
 }
 
 sourceSets.main.allSource.files.each { file ->
+    if (file.name.endsWith('.bin')) return
     def name = "${file.name - '.groovy'}"
+    if (name.endsWith('Util')) return
     tasks.register("run$name", JavaExec) {
         dependsOn compileGroovy
         group = 'Application'
