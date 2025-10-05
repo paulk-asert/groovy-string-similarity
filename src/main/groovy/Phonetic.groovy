@@ -69,30 +69,30 @@ var gameAlgs = [
 ]
 
 def run() {
-    runAndDisplay(soundex, 22)
-    runAndDisplay(metaphone, 22)
-    runAndDisplay(other, 22)
-    runAndDisplay(gameAlgs, 14)
+    runAndDisplay(soundex)
+    runAndDisplay(metaphone)
+    runAndDisplay(other)
+    runAndDisplay(gameAlgs)
 }
 
-def runAndDisplay(a, w1) {
-    var results = [pairs, a].combinations().collect { pair, namedAlg -> namedAlg.value(pair) }
-    var colWidth = max(a.keySet()*.size().max(), results*.get(0)*.size().max()) + 2
-    display(a, pairs, results, colWidth)
+def runAndDisplay(algs) {
+    var results = [pairs, algs].combinations().collect { pair, namedAlg -> namedAlg.value(pair) }
+    display(algs, pairs, results)
     println()
 }
 
-def display(algs, pairs, r, w1) {
+def display(algs, pairs, results) {
+    var w = max(algs.keySet()*.size().max(), results*.get(0)*.size().max()) + 2
     for (i in 0..algs.size()) {
-        if (i) print algs.entrySet()*.key[i - 1].padRight(w1)
+        if (i) print algs.entrySet()*.key[i - 1].padRight(w)
         else print 'Pair'.padRight(labelWidth)
     }
     println()
 
     for (row in 0..<pairs.size()) {
         for (i in 0..algs.size()) {
-            def (s, b) = r[(i - 1) * pairs.size() + row]
-            if (i) print pretty(s.padRight(w1), b)
+            def (s, b) = results[(i - 1) * pairs.size() + row]
+            if (i) print pretty(s.padRight(w), b)
             else print pairs[row].join('|').padRight(labelWidth)
         }
         println()
