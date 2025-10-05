@@ -9,17 +9,17 @@ repositories {
     mavenCentral()
 }
 
-def slf4jVersion = '2.0.16'
-def djlVersion = '0.32.0'
+def slf4jVersion = '2.0.17'
+def djlVersion = '0.34.0'
 def nd4jVersion= '1.0.0-M2.1'
 
 dependencies {
-    implementation 'org.apache.groovy:groovy:5.0.0-alpha-12'
+    implementation 'org.apache.groovy:groovy:5.0.1'
     implementation 'info.debatty:java-string-similarity:2.0.0'
-    implementation 'org.apache.commons:commons-text:1.13.0'
-    implementation 'commons-codec:commons-codec:1.18.0'
+    implementation 'org.apache.commons:commons-text:1.14.0'
+    implementation 'commons-codec:commons-codec:1.19.0'
     implementation 'com.diogonunes:JColor:5.5.1'
-    implementation 'org.openrefine:main:3.9.0'
+    implementation 'org.openrefine:main:3.9.5'
 
     implementation "ai.djl:api:$djlVersion"
     implementation "ai.djl.pytorch:pytorch-engine:$djlVersion"
@@ -33,6 +33,7 @@ dependencies {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:win-x86_64"
         runtimeOnly 'org.bytedeco:javacpp:1.5.11:windows-x86_64'
         runtimeOnly 'org.bytedeco:openblas:0.3.28-1.5.11:windows-x86_64'
+        runtimeOnly "org.nd4j:nd4j-native:$nd4jVersion:windows-x86_64"
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         runtimeOnly "ai.djl.tensorflow:tensorflow-native-cpu:2.16.1:osx-aarch64"
         runtimeOnly 'org.bytedeco:javacpp:1.5.11:macosx-arm64'
@@ -71,10 +72,10 @@ dependencies {
         exclude group: 'org.bytedeco', module: 'openblas'
         exclude group: 'com.twelvemonkeys.imageio'
     }
-    runtimeOnly('org.bytedeco:openblas-platform:0.3.28-1.5.11') {
+    runtimeOnly('org.bytedeco:openblas-platform:0.3.30-1.5.12') {
 //        transitive = false
     }
-    runtimeOnly('org.bytedeco:javacpp:1.5.11') {
+    runtimeOnly('org.bytedeco:javacpp:1.5.12') {
 //        transitive = false
     }
 }
